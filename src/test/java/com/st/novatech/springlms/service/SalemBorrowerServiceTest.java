@@ -263,11 +263,11 @@ public class SalemBorrowerServiceTest {
 		assertEquals(1, listOfAllBorrowed.size(),
 				"that is the borrower's only loan");
 	}
-	
+
 	/**
 	 * Test that getting a book works.
 	 * @throws SQLException on database error
-	 * @throws TransactionException 
+	 * @throws TransactionException on error caught by the service
 	 */
 	@Test
 	public void testGetBook() throws SQLException, TransactionException {
@@ -278,11 +278,11 @@ public class SalemBorrowerServiceTest {
 		assertEquals(foundBook.getTitle(), adminService.getBook(foundBook.getId()).getTitle(),
 				"retrieved book has expected title");
 	}
-	
+
 	/**
 	 * Test that getting a branch works.
 	 * @throws SQLException on database error
-	 * @throws TransactionException 
+	 * @throws TransactionException on error caught by the service
 	 */
 	@Test
 	public void testGetBranch() throws SQLException, TransactionException {
@@ -290,5 +290,5 @@ public class SalemBorrowerServiceTest {
 		assertEquals(branch.getName(), adminService.getbranch(branch.getId()).getName(),
 				"retrieved branch has expected name");
 	}
-	
+
 }

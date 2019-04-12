@@ -145,11 +145,11 @@ public class SalemLibrarianServiceTest {
 				currentListOfCopies.get(testBranch).get(testBook).intValue(),
 				"new copy count propagated to the database");
 	}
-	
+
 	/**
 	 * Test that getting a book works.
 	 * @throws SQLException on database error
-	 * @throws TransactionException 
+	 * @throws TransactionException on error caught by the service
 	 */
 	@Test
 	public void testGetBook() throws SQLException, TransactionException {
@@ -160,11 +160,11 @@ public class SalemLibrarianServiceTest {
 		assertEquals(foundBook.getTitle(), adminService.getBook(foundBook.getId()).getTitle(),
 				"retrieved book has expected title");
 	}
-	
+
 	/**
 	 * Test that getting a branch works.
 	 * @throws SQLException on database error
-	 * @throws TransactionException 
+	 * @throws TransactionException on error caught by the service
 	 */
 	@Test
 	public void testGetBranch() throws SQLException, TransactionException {
