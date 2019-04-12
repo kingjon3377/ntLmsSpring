@@ -44,4 +44,18 @@ public interface LibrarianService extends Service {
 	 * @return the collection of all copy counts in the database
 	 */
 	Map<Branch, Map<Book, Integer>> getAllCopies() throws TransactionException;
+
+	/**
+	 * Get a branch in the database.
+	 * 
+	 * @return a branch in the database
+	 */
+	Branch getbranch(int branchId) throws TransactionException;
+
+	/**
+	 * Get a book in the database.
+	 * 
+	 * @return a book in the database
+	 */
+	Book getBook(int bookId) throws TransactionException;
 }

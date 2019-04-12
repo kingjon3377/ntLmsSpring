@@ -2,6 +2,7 @@ package com.st.novatech.springlms.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.st.novatech.springlms.dao.AuthorDao;
@@ -519,6 +521,64 @@ public final class AdministratorServiceTest {
 		}
 		assertEquals(new HashSet<>(expected), new HashSet<>(testee.getAllBranches()),
 				"getAll returns expected");
+	}
+
+	/**
+	 * Test that retrieval works.
+	 * @throws SQLException on database error
+	 */
+	@Test
+	public void testGetBorrower() throws SQLException {
+		final Borrower b = borrowerDao.create("Ibn Khaldoun", "ADR45", "PHN45");
+
+		assertEquals(b.getName(), borrowerDao.get(b.getCardNo()).getName(),
+				"borrower has expected name");
+	}	
+	
+	/**
+	 * Test that retrieving an author works.
+	 * @throws SQLException on database error
+	 */
+	@Test
+	public void testGetAuthor() throws SQLException {
+		final Author a = authorDao.create("Ibn Khaldoun");
+		assertEquals(a.getName(), authorDao.get(a.getId()).getName(),
+				"retrieved author has expected name");
+	}
+	
+	/**
+	 * Test that getting a book works.
+	 * @throws SQLException on database error
+	 */
+	@Test
+	public void testGetBook() throws SQLException {
+		final Author foundAuthor = authorDao.get(1);
+		final Publisher foundPublisher = publisherDao.get(1);
+		final Book foundBook = bookDao.create("50 down", foundAuthor, foundPublisher);
+
+		assertEquals(foundBook.getTitle(), bookDao.get(foundBook.getId()).getTitle(),
+				"retrieved book has expected title");
+	}
+	
+	/**
+	 * Test that getting a branch works.
+	 * @throws SQLException on database error
+	 */
+	@Test
+	public void testGetBranch() throws SQLException {
+		final Branch p = branchDao.create("Branch 1457", "ADR45");
+		assertEquals(p.getName(), branchDao.get(p.getId()).getName(),
+				"retrieved branch has expected name");
+	}
+	/**
+	 * Test that retrieving a publisher works.
+	 * @throws SQLException on database error
+	 */
+	@Test
+	public void testGetPublisher() throws SQLException {
+		final Publisher foundPublisher = publisherDao.create("Ibn Khaldoun", "ADR45", "PHN45");
+		assertEquals(foundPublisher, publisherDao.get(foundPublisher.getId()),
+				"publisher has expected name");
 	}
 
 }
