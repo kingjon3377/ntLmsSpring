@@ -65,7 +65,7 @@ public final class CatalogController {
 	 * @return the author
 	 * @throws TransactionException if author not found, or on internal error
 	 */
-	@RequestMapping({"/author/${uthorId}", "/author/{authorId}/"})
+	@RequestMapping({"/author/{authorId}", "/author/{authorId}/"})
 	public Author getAuthor(@PathVariable("authorId") final int authorId) throws TransactionException {
 		final Author author = service.getAuthor(authorId);
 		if (author == null) {
