@@ -34,7 +34,7 @@ public final class CatalogController {
 	 * @throws TransactionException on internal error.
 	 */
 	@RequestMapping({"/authors", "/authors/"})
-	public List<Author> getAuthor() throws TransactionException {
+	public List<Author> getAuthors() throws TransactionException {
 		return service.getAllAuthors();
 	}
 
