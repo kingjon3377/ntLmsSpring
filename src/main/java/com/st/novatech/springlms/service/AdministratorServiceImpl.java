@@ -35,6 +35,7 @@ import com.st.novatech.springlms.model.Branch;
 import com.st.novatech.springlms.model.Loan;
 import com.st.novatech.springlms.model.Publisher;
 import com.st.novatech.springlms.util.ThrowingRunnable;
+import org.springframework.stereotype.Service;
 
 /**
  * An implementation of the service class for administrative UIs.
@@ -44,6 +45,7 @@ import com.st.novatech.springlms.util.ThrowingRunnable;
  * @author Jonathan Lovelace
  *
  */
+@Service("AdministratorService")
 public final class AdministratorServiceImpl implements AdministratorService {
 	/**
 	 * DAO to access the library-branch table.
