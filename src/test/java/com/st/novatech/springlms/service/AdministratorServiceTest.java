@@ -2,7 +2,6 @@ package com.st.novatech.springlms.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -12,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.st.novatech.springlms.dao.AuthorDao;
@@ -533,8 +531,8 @@ public final class AdministratorServiceTest {
 
 		assertEquals(b.getName(), borrowerDao.get(b.getCardNo()).getName(),
 				"borrower has expected name");
-	}	
-	
+	}
+
 	/**
 	 * Test that retrieving an author works.
 	 * @throws SQLException on database error
@@ -545,7 +543,7 @@ public final class AdministratorServiceTest {
 		assertEquals(a.getName(), authorDao.get(a.getId()).getName(),
 				"retrieved author has expected name");
 	}
-	
+
 	/**
 	 * Test that getting a book works.
 	 * @throws SQLException on database error
@@ -559,7 +557,7 @@ public final class AdministratorServiceTest {
 		assertEquals(foundBook.getTitle(), bookDao.get(foundBook.getId()).getTitle(),
 				"retrieved book has expected title");
 	}
-	
+
 	/**
 	 * Test that getting a branch works.
 	 * @throws SQLException on database error
