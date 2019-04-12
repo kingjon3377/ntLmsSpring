@@ -14,6 +14,7 @@ import com.st.novatech.springlms.exception.RetrieveException;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
+import com.st.novatech.springlms.model.Publisher;
 import com.st.novatech.springlms.service.AdministratorService;
 
 /**
@@ -49,6 +50,16 @@ public final class CatalogController {
 	}
 
 	/**
+	 * Get all publishers from the database. Spring turns the list into JSON (or XML?).
+	 * @return the list of all publishers in the database
+	 * @throws TransactionException on internal error
+	 */
+	@RequestMapping({"/publishers","/publishers/"})
+	public List<Publisher> getPublishers() throws TransactionException {
+		return service.getAllPublishers();
+	}
+
+	/**
 	 * Get an author by its ID number.
 	 * @param authorId the ID number of the author
 	 * @return the author
@@ -61,6 +72,22 @@ public final class CatalogController {
 			throw new RetrieveException("Author not found");
 		} else {
 			return author;
+		}
+	}
+
+	/**
+	 * Get a book by its ID number.
+	 * @param bookId the ID number of the book
+	 * @return the book
+	 * @throws TransactionException if book not found, or on internal error
+	 */
+	@RequestMapping({"/book/{bookId}","/book/{bookId}/"})
+	public Book getBook(@PathVariable("bookId") final int bookId) throws TransactionException {
+		final Book book = service.getBook(bookId);
+		if (book == null) {
+			throw new RetrieveException("Book not found");
+		} else {
+			return book;
 		}
 	}
 
