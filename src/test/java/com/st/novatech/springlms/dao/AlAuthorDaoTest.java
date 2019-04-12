@@ -37,11 +37,7 @@ public class AlAuthorDaoTest {
 	 */
 	@BeforeEach
 	public void setUp() throws SQLException, IOException {
-		try {
-			conn = InMemoryDBFactory.getConnection("library");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		conn = InMemoryDBFactory.getConnection("library");
 		authorDao = new AuthorDaoImpl(conn);
 	}
 
