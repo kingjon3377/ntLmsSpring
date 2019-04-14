@@ -1,5 +1,6 @@
 package com.st.novatech.springlms.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.st.novatech.springlms.exception.RetrieveException;
 import com.st.novatech.springlms.exception.TransactionException;
+import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.Loan;
 import com.st.novatech.springlms.service.AdministratorService;
 
 /**
@@ -177,6 +180,59 @@ public final class ExecutiveController {
 		final Borrower borrower = service.getBorrower(cardNumber);
 		if (borrower != null) {
 			service.deleteBorrower(borrower);
+		}
+	}
+	/**
+	 * Override the due date of a loan.
+	 * @param borrowerId the card number of the borrower who checked out the book in question
+	 * @param branchId the ID number of the branch from which the book was checked out
+	 * @param bookId the ID number of the book in question
+	 * @param dueDate the new due date
+	 * @return the updated loan record
+	 * @throws TransactionException if no such borrower, branch, book, or loan, or on internal error
+	 */
+	@RequestMapping(path = "/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due", method = RequestMethod.PUT)
+	public Loan overrideDueDate(@PathVariable("bookId") final int bookId,
+			@PathVariable("branchId") final int branchId,
+			@PathVariable("borrowerId") final int borrowerId,
+			@RequestParam final LocalDate dueDate) throws TransactionException {
+		final Book book = service.getBook(bookId);
+		final Branch branch = service.getbranch(branchId);
+		final Borrower borrower = service.getBorrower(borrowerId);
+		Loan loan;
+		if (book == null || branch == null || borrower == null) {
+			throw new RetrieveException("No such loan");
+		} else {
+			loan = service.getLoan(borrowerId, branchId, bookId);
+			if (loan == null) {
+				throw new RetrieveException("No such loan");
+			}
+		}
+		service.overrideDueDateForLoan(book, borrower, branch, dueDate);
+		return service.getLoan(borrowerId, branchId, bookId);
+	}
+	/**
+	 * Get the date a book is due back to the branch from which it was borrowed.
+	 * @param borrowerId the card number of the borrower who checked out the book in question
+	 * @param branchId the ID number of the branch from which the book was checked out
+	 * @param bookId the ID number of the book in question
+	 * @return the updated loan record
+	 * @throws TransactionException if no such borrower, branch, book, or loan, or on internal error
+	 */
+	@RequestMapping(path = "/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due")
+	public LocalDate getDueDate(@PathVariable("bookId") final int bookId,
+			@PathVariable("branchId") final int branchId,
+			@PathVariable("borrowerId") final int borrowerId) throws TransactionException {
+		if (service.getBook(bookId) == null || service.getbranch(branchId) == null
+				|| service.getBorrower(borrowerId) == null) {
+			throw new RetrieveException("No such loan");
+		} else {
+			final Loan loan = service.getLoan(borrowerId, branchId, bookId);
+			if (loan == null) {
+				throw new RetrieveException("No such loan");
+			} else {
+				return loan.getDueDate();
+			}
 		}
 	}
 }
