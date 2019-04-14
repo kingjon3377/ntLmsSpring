@@ -2,29 +2,55 @@ package com.st.novatech.springlms.model;
 
 import java.util.Objects;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
 /**
  * A book in a library.
  *
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
+@Entity
+@Table(name = "tbl_book")
 public class Book {
 	/**
 	 * The ID number used to refer to this book in the database.
 	 */
+	@Id
+	@Column(name = "bookId")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private final int id;
 	/**
 	 * The title of the book.
 	 */
+	@Column
 	private String title;
 	/**
 	 * The author of the book.
 	 */
+	@ManyToOne
+	@JoinColumn(name = "authId")
 	private Author author;
 	/**
 	 * The publisher of the book.
 	 */
+	@ManyToOne
+	@JoinColumn(name = "pubId")
 	private Publisher publisher;
+
+	/**
+	 * No-arg constructor required for JPA.
+	 */
+	protected Book() {
+		this(0, "", null, null);
+	}
 
 	/**
 	 * Constructing a book object requires its ID number, title, author, and
@@ -35,7 +61,8 @@ public class Book {
 	 * @param author    the author of the book, or null if no author
 	 * @param publisher the publisher of the book, or null if no publisher
 	 */
-	public Book(final int id, final String title, final Author author, final Publisher publisher) {
+	public Book(final int id, final String title, final Author author,
+			final Publisher publisher) {
 		this.id = id;
 		this.title = title;
 		this.author = author;
@@ -44,6 +71,7 @@ public class Book {
 
 	/**
 	 * Get the title of the book, which will not be null.
+	 *
 	 * @return the title of the book
 	 */
 	public String getTitle() {
@@ -52,6 +80,7 @@ public class Book {
 
 	/**
 	 * Set the title of the book, which must not be null.
+	 *
 	 * @param title the new title of the book.
 	 */
 	public void setTitle(final String title) {
@@ -60,6 +89,7 @@ public class Book {
 
 	/**
 	 * Get the author of the book.
+	 *
 	 * @return the author of the book, or null if no author.
 	 */
 	public Author getAuthor() {
@@ -68,6 +98,7 @@ public class Book {
 
 	/**
 	 * Set the author of the book.
+	 *
 	 * @param author the new author of the book, or null if no author
 	 */
 	public void setAuthor(final Author author) {
@@ -76,6 +107,7 @@ public class Book {
 
 	/**
 	 * Get the publisher of the book.
+	 *
 	 * @return the publisher of the book, or null if no publisher.
 	 */
 	public Publisher getPublisher() {
@@ -84,6 +116,7 @@ public class Book {
 
 	/**
 	 * Set the publisher of the book.
+	 *
 	 * @param publisher the new publisher of the book, or null if no publisher.
 	 */
 	public void setPublisher(final Publisher publisher) {
@@ -92,6 +125,7 @@ public class Book {
 
 	/**
 	 * Get the ID number used to refer to this book in the database.
+	 *
 	 * @return the ID used to refer to this book in the database.
 	 */
 	public int getId() {
@@ -126,6 +160,7 @@ public class Book {
 
 	@Override
 	public String toString() {
-		return "Book: " + title + " with " + Objects.toString(author, "No Author") + " and " + Objects.toString(publisher, "No Publisher");
+		return "Book: " + title + " with " + Objects.toString(author, "No Author")
+				+ " and " + Objects.toString(publisher, "No Publisher");
 	}
 }

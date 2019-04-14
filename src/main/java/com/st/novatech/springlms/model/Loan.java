@@ -6,6 +6,12 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
 /**
  * An object representing the loan of a book. Unlike every other model class,
  * this has no ID field; instead, its identity consists in the intersection of
@@ -14,28 +20,44 @@ import java.util.Optional;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
+@Entity
+@Table(name = "tbl_book_loans")
 public class Loan {
 	/**
 	 * The book that was borrowed.
 	 */
+	@ManyToOne
+	@JoinColumn(name = "bookId")
 	private final Book book;
 	/**
 	 * The borrower who checked out the book.
 	 */
+	@ManyToOne
+	@JoinColumn(name = "cardNo")
 	private final Borrower borrower;
 	/**
 	 * The branch from which the book was checked out.
 	 */
+	@ManyToOne
+	@JoinColumn(name = "branchId")
 	private final Branch branch;
 	/**
 	 * When the book was checked out.
 	 */
+	@Column
 	private LocalDateTime dateOut;
 	/**
 	 * When the book is due.
 	 */
+	@Column
 	private LocalDate dueDate;
 
+	/**
+	 * No-arg constructor required for JPA.
+	 */
+	protected Loan() {
+		this(null, null, null, null, null);
+	}
 	/**
 	 * To construct a Loan object, the caller must supply the book, borrower, and
 	 * branch that identify the loan in question and the dates the book was checked

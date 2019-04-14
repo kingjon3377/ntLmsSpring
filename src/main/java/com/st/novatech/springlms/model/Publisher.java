@@ -2,30 +2,50 @@ package com.st.novatech.springlms.model;
 
 import java.util.Objects;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 /**
  * A publisher of books.
  *
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public final class Publisher {
+@Entity
+@Table(name = "tbl_publisher")
+public class Publisher {
 	/**
 	 * The ID number identifying this publisher in the database.
 	 */
+	@Id
+	@Column(name = "publisherId")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private final int id;
 	/**
 	 * The name of the publisher.
 	 */
+	@Column(name = "publisherName")
 	private String name;
 	/**
 	 * The address of the publisher.
 	 */
+	@Column(name = "publisherAddress")
 	private String address;
 	/**
 	 * The publisher's phone number.
 	 */
+	@Column(name = "publisherPhone")
 	private String phone;
-
+	/**
+	 * No-arg constructor required for JPA.
+	 */
+	protected Publisher() {
+		this(0, "");
+	}
 	/**
 	 * To construct a publisher object, the caller must at least supply its ID
 	 * number and name.

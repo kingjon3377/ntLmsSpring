@@ -2,30 +2,50 @@ package com.st.novatech.springlms.model;
 
 import java.util.Objects;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 /**
  * A user of the library who is able to check out books.
  *
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
+@Entity
+@Table(name = "tbl_borrower")
 public class Borrower {
 	/**
 	 * The borrower's card number, used as this object's identity.
 	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private final int cardNo;
 	/**
 	 * The borrower's name.
 	 */
+	@Column
 	private String name;
 	/**
 	 * The borrower's address.
 	 */
+	@Column
 	private String address;
 	/**
 	 * The borrower's phone number.
 	 */
+	@Column
 	private String phone;
 
+	/**
+	 * No-arg constructor required for JPA.
+	 */
+	protected Borrower() {
+		this(0, "", null, null);
+	}
 	/**
 	 * To construct a Borrower object callers must supply the card number, name,
 	 * address, and phone number.
