@@ -28,3 +28,4 @@ db.properties
 /target/
 /application.properties
 /config/application.properties
+src/main/resources/database-config.properties
