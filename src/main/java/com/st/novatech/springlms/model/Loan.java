@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -24,23 +25,10 @@ import javax.persistence.Table;
 @Table(name = "tbl_book_loans")
 public class Loan {
 	/**
-	 * The book that was borrowed.
+	 * The three fields that together constitute the identity of a loan.
 	 */
-	@ManyToOne
-	@JoinColumn(name = "bookId")
-	private final Book book;
-	/**
-	 * The borrower who checked out the book.
-	 */
-	@ManyToOne
-	@JoinColumn(name = "cardNo")
-	private final Borrower borrower;
-	/**
-	 * The branch from which the book was checked out.
-	 */
-	@ManyToOne
-	@JoinColumn(name = "branchId")
-	private final Branch branch;
+	@EmbeddedId
+	private LoanIdentity id;
 	/**
 	 * When the book was checked out.
 	 */
@@ -71,9 +59,11 @@ public class Loan {
 	 */
 	public Loan(final Book book, final Borrower borrower, final Branch branch,
 			final LocalDateTime dateOut, final LocalDate dueDate) {
-		this.book = book;
-		this.borrower = borrower;
-		this.branch = branch;
+		if (book == null && branch == null && borrower == null) {
+			id = null;
+		} else {
+			id = new LoanIdentity(book, borrower, branch);
+		}
 		this.dateOut = dateOut;
 		this.dueDate = dueDate;
 	}
@@ -83,7 +73,11 @@ public class Loan {
 	 * @return the book that was checked out
 	 */
 	public Book getBook() {
-		return book;
+		if (id == null) {
+			return null;
+		} else {
+			return id.getBook();
+		}
 	}
 
 	/**
@@ -91,7 +85,11 @@ public class Loan {
 	 * @return the borrower who checked the book out.
 	 */
 	public Borrower getBorrower() {
-		return borrower;
+		if (id == null) {
+			return null;
+		} else {
+			return id.getBorrower();
+		}
 	}
 
 	/**
@@ -99,7 +97,11 @@ public class Loan {
 	 * @return the branch from which the book was borrowed.
 	 */
 	public Branch getBranch() {
-		return branch;
+		if (id == null) {
+			return null;
+		} else {
+			return id.getBranch();
+		}
 	}
 
 	/**
@@ -140,7 +142,7 @@ public class Loan {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(book, borrower, branch);
+		return Objects.hash(id);
 	}
 
 	/**
@@ -152,9 +154,7 @@ public class Loan {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof Loan) {
-			return Objects.equals(book, ((Loan) obj).getBook())
-					&& Objects.equals(borrower, ((Loan) obj).getBorrower())
-					&& Objects.equals(branch, ((Loan) obj).getBranch())
+			return Objects.equals(id, ((Loan) obj).id)
 					&& timesEqual(dateOut, ((Loan) obj).getDateOut())
 					&& Objects.equals(dueDate, ((Loan) obj).getDueDate());
 		} else {
@@ -183,10 +183,10 @@ public class Loan {
 	@Override
 	public String toString() {
 		return String.format("Loan: %s by %s borrowed from %s by %s on %s, due %s",
-				book.getTitle(),
-				Optional.ofNullable(book.getAuthor()).map(Author::getName)
+				getBook().getTitle(),
+				Optional.ofNullable(getBook().getAuthor()).map(Author::getName)
 						.orElse("an unknown author"),
-				branch.getName(), borrower.getName(),
+				getBranch().getName(), getBorrower().getName(),
 				Objects.toString(dateOut, "an unknown date"),
 				Objects.toString(dueDate, "never"));
 	}
