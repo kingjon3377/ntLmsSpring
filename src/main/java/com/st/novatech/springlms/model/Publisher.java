@@ -1,5 +1,6 @@
 package com.st.novatech.springlms.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import javax.persistence.Column;
@@ -17,7 +18,12 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "tbl_publisher")
-public class Publisher {
+public class Publisher implements Serializable {
+	/**
+	 * Serialization version. Increment on any change to class structure that is
+	 * pushed to production.
+	 */
+	private static final long serialVersionUID = 1L;
 	/**
 	 * The ID number identifying this publisher in the database.
 	 */
