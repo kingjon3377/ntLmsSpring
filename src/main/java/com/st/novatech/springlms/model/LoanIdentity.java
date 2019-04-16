@@ -7,6 +7,9 @@ import javax.persistence.Embeddable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 /**
  * A class to be the primary key of a {@link Loan} for JPA, which requires every
  * Entity to have a single primary key.
@@ -27,18 +30,21 @@ public class LoanIdentity implements Serializable {
 	 */
 	@ManyToOne
 	@JoinColumn(name = "bookId")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Book book;
 	/**
 	 * The borrower who checked out the book.
 	 */
 	@ManyToOne
 	@JoinColumn(name = "cardNo")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Borrower borrower;
 	/**
 	 * The branch from which the book was checked out.
 	 */
 	@ManyToOne
 	@JoinColumn(name = "branchId")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Branch branch;
 	/**
 	 * No-arg constructor required for JPA.

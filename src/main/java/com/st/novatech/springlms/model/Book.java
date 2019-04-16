@@ -11,6 +11,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 /**
  * A book in a library.
  *
@@ -37,12 +40,14 @@ public class Book {
 	 */
 	@ManyToOne
 	@JoinColumn(name = "authId")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Author author;
 	/**
 	 * The publisher of the book.
 	 */
 	@ManyToOne
 	@JoinColumn(name = "pubId")
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Publisher publisher;
 
 	/**
