@@ -144,7 +144,7 @@ public class Loan {
 	}
 
 	/**
-	 * An object to this one is equal iff it is a Loan involving an equal book,
+	 * An object is equal to this one iff it is a Loan involving an equal book,
 	 * borrower, and branch and its date out and due date are equal.
 	 */
 	@Override
