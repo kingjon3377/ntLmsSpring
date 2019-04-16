@@ -29,7 +29,7 @@ public class EmptyStringInterceptor extends EmptyInterceptor {
 	private boolean convertEmptyStrings(final Object[] state, final Type[] types) {
 		boolean modified = false;
 		for (int i = 0; i < state.length; i++) {
-			if ((types[i] instanceof StringType) && state[i] == null) {
+			if (types[i] instanceof StringType && state[i] == null) {
 				state[i] = "";
 				modified = true;
 			}
