@@ -1,6 +1,5 @@
 package com.st.novatech.springlms.service;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -107,11 +106,8 @@ public final class BorrowerServiceImpl implements BorrowerService {
 
 	/**
 	 * Constructor that uses the default time zone.
-	 *
-	 * @throws IOException  on I/O error reading DB configuration
-	 * @throws SQLException on error setting up the database or DAOs
 	 */
-	public BorrowerServiceImpl() throws IOException, SQLException {
+	public BorrowerServiceImpl() {
 		this(Clock.systemDefaultZone());
 	}
 
