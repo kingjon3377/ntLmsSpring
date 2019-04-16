@@ -77,7 +77,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	/**
 	 * The currently-active transaction, or null if not in a transaction.
 	 */
-	private TransactionStatus transaction;
+	private volatile TransactionStatus transaction;
 	/**
 	 * The transaction manager provided by Spring.
 	 */

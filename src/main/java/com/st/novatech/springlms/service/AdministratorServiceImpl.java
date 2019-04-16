@@ -79,7 +79,7 @@ public final class AdministratorServiceImpl implements AdministratorService {
 	/**
 	 * The currently-active transaction, or null if not in a transaction.
 	 */
-	private TransactionStatus transaction;
+	private volatile TransactionStatus transaction;
 	/**
 	 * The transaction manager provided by Spring.
 	 */
