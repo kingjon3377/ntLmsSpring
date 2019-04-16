@@ -400,7 +400,7 @@ public final class AdministratorServiceImpl implements AdministratorService {
 	}
 
 	@Override
-	public Branch getbranch(final int branchId) throws TransactionException {
+	public Branch getBranch(final int branchId) throws TransactionException {
 		try {
 			return branchDao.findById(branchId).orElse(null);
 		} catch (final DataAccessException except) {
@@ -421,7 +421,7 @@ public final class AdministratorServiceImpl implements AdministratorService {
 	@Override
 	public Loan getLoan(final int cardNo, final int branchId, final int bookId) throws TransactionException {
 		try {
-			return loansDao.get(getBook(bookId), getBorrower(cardNo), getbranch(branchId));
+			return loansDao.get(getBook(bookId), getBorrower(cardNo), getBranch(branchId));
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a Loan record", except);
 			throw rollback(new RetrieveException("Getting a Loan failed", except));

@@ -155,7 +155,7 @@ public class SalemLibrarianServiceTest {
 	@Test
 	public void testGetBranch() throws SQLException, TransactionException {
 		final Branch branch = adminService.createBranch("Branch 1457", "ADR45");
-		assertEquals(branch.getName(), adminService.getbranch(branch.getId()).getName(),
+		assertEquals(branch.getName(), adminService.getBranch(branch.getId()).getName(),
 				"retrieved branch has expected name");
 	}
 }

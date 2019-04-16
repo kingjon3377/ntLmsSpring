@@ -62,7 +62,7 @@ public final class ExecutiveController {
 	@RequestMapping({"/branch/{branchId}", "/branch/{branchId}/"})
 	public Branch getBranch(@PathVariable("branchId") final int branchId)
 			throws TransactionException {
-		final Branch branch = service.getbranch(branchId);
+		final Branch branch = service.getBranch(branchId);
 		if (branch == null) {
 			throw new RetrieveException("Branch not found");
 		} else {
@@ -96,14 +96,14 @@ public final class ExecutiveController {
 			"/branch/{branchId}/" }, method = RequestMethod.PUT)
 	public Branch updateBranch(@PathVariable("branchId") final int branchId,
 			@RequestBody final Branch input) throws TransactionException {
-		final Branch branch = service.getbranch(branchId);
+		final Branch branch = service.getBranch(branchId);
 		if (branch == null) {
 			throw new RetrieveException("Branch not found");
 		} else {
 			branch.setName(input.getName());
 			branch.setAddress(input.getAddress());
 			service.updateBranch(branch);
-			return service.getbranch(branchId);
+			return service.getBranch(branchId);
 		}
 	}
 	/**
@@ -163,7 +163,7 @@ public final class ExecutiveController {
 	 */
 	@RequestMapping(path = {"/branch/{branchId}", "/branch/{branchId}/"}, method = RequestMethod.DELETE)
 	public void deleteBranch(@PathVariable("branchId") final int branchId) throws TransactionException {
-		final Branch branch = service.getbranch(branchId);
+		final Branch branch = service.getBranch(branchId);
 		if (branch != null) {
 			service.deleteBranch(branch);
 		}
@@ -197,7 +197,7 @@ public final class ExecutiveController {
 			@PathVariable("borrowerId") final int borrowerId,
 			@RequestParam final LocalDate dueDate) throws TransactionException {
 		final Book book = service.getBook(bookId);
-		final Branch branch = service.getbranch(branchId);
+		final Branch branch = service.getBranch(branchId);
 		final Borrower borrower = service.getBorrower(borrowerId);
 		Loan loan;
 		if (book == null || branch == null || borrower == null) {
@@ -223,7 +223,7 @@ public final class ExecutiveController {
 	public LocalDate getDueDate(@PathVariable("bookId") final int bookId,
 			@PathVariable("branchId") final int branchId,
 			@PathVariable("borrowerId") final int borrowerId) throws TransactionException {
-		if (service.getBook(bookId) == null || service.getbranch(branchId) == null
+		if (service.getBook(bookId) == null || service.getBranch(branchId) == null
 				|| service.getBorrower(borrowerId) == null) {
 			throw new RetrieveException("No such loan");
 		} else {
