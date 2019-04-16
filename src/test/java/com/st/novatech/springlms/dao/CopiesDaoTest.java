@@ -2,56 +2,45 @@ package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 /**
  * Test of the copies DAO.
  * @author Jonathan Lovelace
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 class CopiesDaoTest {
 	/**
 	 * The DAO being tested.
 	 */
+	@Autowired
 	private CopiesDao testee;
 	/**
-	 * The connection to the database.
+	 * Book DAO used in tests.
 	 */
-	private Connection db;
-
+	@Autowired
+	private BookDao bookDao;
 	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
+	 * Branch DAO used in tests.
 	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		testee = new CopiesDaoImpl(db);
-	}
-
-	/**
-	 * Tear down the database after each test.
-	 *
-	 * @throws SQLException on database error while closing the connection
-	 */
-	@AfterEach
-	public void tearDown() throws SQLException {
-		db.close();
-	}
+	@Autowired
+	private LibraryBranchDao branchDao;
 
 	/**
 	 * Test single-row retrieval.
@@ -59,8 +48,6 @@ class CopiesDaoTest {
 	 */
 	@Test
 	public final void testGetCopies() throws SQLException {
-		final BookDao bookDao = new BookDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Book firstBook = bookDao.create("book one", null, null);
 		final Book secondBook = bookDao.create("book two", null, null);
 		final Branch firstBranch = branchDao.create("branch one", "address one");
@@ -82,37 +69,20 @@ class CopiesDaoTest {
 	 */
 	@Test
 	public final void testSetCopies() throws SQLException {
-		final BookDao bookDao = new BookDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Book firstBook = bookDao.create("book one", null, null);
 		final Book secondBook = bookDao.create("book two", null, null);
 		final Branch firstBranch = branchDao.create("branch one", "address one");
 		final Branch secondBranch = branchDao.create("branch two", "");
-		try (PreparedStatement count = db
-				.prepareStatement("SELECT COUNT(*) FROM `tbl_book_copies`");
-				PreparedStatement sum = db.prepareStatement(
-						"SELECT SUM(`noOfCopies`) FROM `tbl_book_copies`")) {
-			try (ResultSet rs = count.executeQuery()) {
-				rs.next();
-				assertEquals(0, rs.getInt(1), "No rows before inserting data");
-			}
-			testee.setCopies(firstBranch, firstBook, 2);
-			testee.setCopies(firstBranch, secondBook, 3);
-			testee.setCopies(secondBranch, firstBook, 5);
-			try (ResultSet rs = count.executeQuery()) {
-				rs.next();
-				assertEquals(3, rs.getInt(1), "All expected rows present");
-			}
-			try (ResultSet rs = sum.executeQuery()) {
-				rs.next();
-				assertEquals(10, rs.getInt(1), "Expected number of copies present");
-			}
-			testee.setCopies(firstBranch, firstBook, 0);
-			try (ResultSet rs = count.executeQuery()) {
-				rs.next();
-				assertEquals(2, rs.getInt(1), "Setting count to 0 removes row");
-			}
-		}
+		assertEquals(0, testee.findAll().size(), "No rows before inserting data");
+		testee.setCopies(firstBranch, firstBook, 2);
+		testee.setCopies(firstBranch, secondBook, 3);
+		testee.setCopies(secondBranch, firstBook, 5);
+		assertEquals(3, testee.findAll().size(), "All expected rows present");
+		assertEquals(10,
+				testee.findAll().stream().mapToInt(BranchCopies::getCopies).sum(),
+				"Expected number of copies present");
+		testee.setCopies(firstBranch, firstBook, 0);
+		assertEquals(2, testee.findAll().size(), "Setting count to 0 removes row");
 	}
 
 	/**
@@ -121,8 +91,6 @@ class CopiesDaoTest {
 	 */
 	@Test
 	public final void testGetAllBranchCopies() throws SQLException {
-		final BookDao bookDao = new BookDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Book firstBook = bookDao.create("first book", null, null);
 		final Book secondBook = bookDao.create("second book", null, null);
 		final Branch firstBranch = branchDao.create("first branch", "first address");
@@ -147,8 +115,6 @@ class CopiesDaoTest {
 	 */
 	@Test
 	public final void testGetAllBookCopies() throws SQLException {
-		final BookDao bookDao = new BookDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Book firstBook = bookDao.create("first book", null, null);
 		final Book secondBook = bookDao.create("second book", null, null);
 		final Branch firstBranch = branchDao.create("first branch", "first address");
@@ -173,8 +139,6 @@ class CopiesDaoTest {
 	 */
 	@Test
 	public final void testGetAllCopies() throws SQLException {
-		final BookDao bookDao = new BookDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Book firstBook = bookDao.create("first book", null, null);
 		final Book secondBook = bookDao.create("second book", null, null);
 		final Branch firstBranch = branchDao.create("first branch", "first address");

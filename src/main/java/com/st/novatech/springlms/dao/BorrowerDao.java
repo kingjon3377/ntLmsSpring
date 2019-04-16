@@ -2,6 +2,9 @@ package com.st.novatech.springlms.dao;
 
 import java.sql.SQLException;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import com.st.novatech.springlms.model.Borrower;
 
 /**
@@ -10,7 +13,8 @@ import com.st.novatech.springlms.model.Borrower;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public interface BorrowerDao extends Dao<Borrower> {
+@Repository
+public interface BorrowerDao extends JpaRepository<Borrower, Integer> {
 	/**
 	 * Create a borrower object and add it to the database.
 	 *
@@ -20,5 +24,7 @@ public interface BorrowerDao extends Dao<Borrower> {
 	 * @return the newly created borrower object
 	 * @throws SQLException on unexpected error in dealing with the database
 	 */
-	Borrower create(String borrowerName, String borrowerAddress, String borrowerPhone) throws SQLException;
+	default Borrower create(final String borrowerName, final String borrowerAddress, final String borrowerPhone) {
+		return save(new Borrower(0, borrowerName, borrowerAddress, borrowerPhone));
+	}
 }

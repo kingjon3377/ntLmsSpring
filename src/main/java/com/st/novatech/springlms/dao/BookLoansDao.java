@@ -3,12 +3,15 @@ package com.st.novatech.springlms.dao;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
 import com.st.novatech.springlms.model.Loan;
+import com.st.novatech.springlms.model.LoanIdentity;
 
 /**
  * A Data Access Object interface to access the table of outstanding loans.
@@ -16,7 +19,8 @@ import com.st.novatech.springlms.model.Loan;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public interface BookLoansDao {
+@Repository
+public interface BookLoansDao extends JpaRepository<Loan, LoanIdentity> {
 	/**
 	 * Check out a book from a particular branch for a particular borrower, with the
 	 * given date out and due date.
@@ -29,20 +33,9 @@ public interface BookLoansDao {
 	 * @return the created loan object
 	 * @throws SQLException on unexpected error dealing with the database
 	 */
-	Loan create(Book book, Borrower borrower, Branch branch, LocalDateTime dateOut, LocalDate dueDate) throws SQLException;
-	/**
-	 * Update the dates associated with the given loan.
-	 * @param loan The loan in question
-	 * @throws SQLException on unexpected error dealing with the database
-	 */
-	void update(Loan loan) throws SQLException;
-	/**
-	 * Delete a loan from the database.
-	 * @param loan The loan to delete
-	 * @throws SQLException on unexpected error dealing with the database
-	 */
-	void delete(Loan loan) throws SQLException;
-
+	default Loan create(final Book book, final Borrower borrower, final Branch branch, final LocalDateTime dateOut, final LocalDate dueDate) {
+		return save(new Loan(book, borrower, branch, dateOut, dueDate));
+	}
 	/**
 	 * Get the loan in which the given borrower checked out the given book from the
 	 * given branch.
@@ -53,14 +46,7 @@ public interface BookLoansDao {
 	 * @return the Loan object giving the dates associated with this loan
 	 * @throws SQLException on unexpected error dealing with the database
 	 */
-	Loan get(Book book, Borrower borrower, Branch branch) throws SQLException;
-
-	/**
-	 * Get all outstanding loans from the database. Callers should not rely on the
-	 * order.
-	 *
-	 * @return the list of all outstanding loans
-	 * @throws SQLException on unexpected error dealing with the database
-	 */
-	List<Loan> getAll() throws SQLException;
+	default Loan get(final Book book, final Borrower borrower, final Branch branch) {
+		return findById(new LoanIdentity(book, borrower, branch)).orElse(null);
+	}
 }

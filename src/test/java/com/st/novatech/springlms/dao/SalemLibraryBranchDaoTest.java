@@ -1,21 +1,23 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Branch;
 
@@ -24,6 +26,9 @@ import com.st.novatech.springlms.model.Branch;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemLibraryBranchDaoTest {
 	/**
 	 * Sample branch name for tests.
@@ -37,6 +42,7 @@ public class SalemLibraryBranchDaoTest {
 	/**
 	 * Branch DAO under test.
 	 */
+	@Autowired
 	private LibraryBranchDao branchDaoImpl;
 	/**
 	 * Stored branch from tests.
@@ -46,28 +52,12 @@ public class SalemLibraryBranchDaoTest {
 	private Branch testBranch;
 
 	/**
-	 * Database connection.
-	 */
-	private Connection conn;
-
-	/**
-	 * Database table this DAO represents.
-	 */
-	private static final String TABLE = "tbl_library_branch";
-	/**
-	 * Primary key field in the database table.
-	 */
-	private static final String PRIMARY_KEY = "branchId";
-
-	/**
 	 * Set up database connection, DAO, and test data before each test.
 	 * @throws SQLException on database error
 	 * @throws IOException  on I/O error reading the database schema from file
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		branchDaoImpl = new LibraryBranchDaoImpl(conn);
 		testBranch = branchDaoImpl.create(SAMPLE_BRANCH_NAME, SAMPLE_BRANCH_ADDRESS);
 	}
 
@@ -79,16 +69,6 @@ public class SalemLibraryBranchDaoTest {
 	public void tearThis() throws SQLException {
 		// FIXME?: WARNING maybe something that doesn't call the method we are trying to test
 		branchDaoImpl.delete(testBranch);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + PRIMARY_KEY + ") AS size FROM " + TABLE + ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -99,11 +79,11 @@ public class SalemLibraryBranchDaoTest {
 	public void createBranchTest() throws SQLException {
 		branchDaoImpl.delete(testBranch);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = branchDaoImpl.findAll().size();
 
 		testBranch = branchDaoImpl.create(SAMPLE_BRANCH_NAME, SAMPLE_BRANCH_ADDRESS);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = branchDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize, "creating a branch creates a row");
 		assertEquals(SAMPLE_BRANCH_NAME, testBranch.getName(),
@@ -118,14 +98,14 @@ public class SalemLibraryBranchDaoTest {
 	 */
 	@Test
 	public void deleteBranchTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = branchDaoImpl.findAll().size();
 
 		branchDaoImpl.delete(testBranch);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = branchDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize, "deleting a branch removes a row");
-		assertNull(branchDaoImpl.get(testBranch.getId()),
+		assertFalse(branchDaoImpl.findById(testBranch.getId()).isPresent(),
 				"deleted branch is gone from database");
 	}
 
@@ -141,9 +121,9 @@ public class SalemLibraryBranchDaoTest {
 		final Branch newBranch = new Branch(testBranch.getId(), newBranchName,
 				newBranchAddress);
 
-		branchDaoImpl.update(newBranch);
+		branchDaoImpl.save(newBranch);
 
-		final Branch updatedBranch = branchDaoImpl.get(newBranch.getId());
+		final Branch updatedBranch = branchDaoImpl.findById(newBranch.getId()).get();
 
 		assertNotNull(updatedBranch, "updated row is still present");
 		assertEquals(updatedBranch, newBranch, "updated row has expected fields");
@@ -156,7 +136,7 @@ public class SalemLibraryBranchDaoTest {
 	@DisplayName("Get correctly")
 	@Test
 	public void testGetBranch() throws SQLException {
-		final Branch foundBranch = branchDaoImpl.get(testBranch.getId());
+		final Branch foundBranch = branchDaoImpl.findById(testBranch.getId()).get();
 		assertNotNull(foundBranch, "retrieved branch was not null");
 		assertEquals(testBranch, foundBranch, "expected branch was retrieved");
 	}
@@ -168,19 +148,7 @@ public class SalemLibraryBranchDaoTest {
 	@DisplayName("Return null if entry not found")
 	@Test
 	public void testGetNotFoundBranch() throws SQLException {
-		assertNull(branchDaoImpl.get(Integer.MAX_VALUE),
+		assertFalse(branchDaoImpl.findById(Integer.MAX_VALUE).isPresent(),
 				"null is retrieved for unknown ID.");
 	}
-
-	/**
-	 * Test that retrieving all branches works.
-	 * @throws SQLException on database error
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Branch> listOfBranches = branchDaoImpl.getAll();
-		assertEquals(listOfBranches.size(), mySQLSize(),
-				"DAO and SQL agree on number of branches");
-	}
-
 }

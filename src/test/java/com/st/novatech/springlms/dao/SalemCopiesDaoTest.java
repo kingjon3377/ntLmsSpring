@@ -15,6 +15,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
@@ -24,11 +31,19 @@ import com.st.novatech.springlms.model.Branch;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemCopiesDaoTest {
+	/**
+	 * Database-connection wrapper.
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	/**
 	 * Database connection.
 	 */
-	private static Connection conn = null;
+	private Connection conn;
 
 	/**
 	 * The table this DAO represents.
@@ -61,14 +76,17 @@ public class SalemCopiesDaoTest {
 	/**
 	 * Book DAO involved in tests.
 	 */
+	@Autowired
 	private BookDao bookDaoImpl;
 	/**
 	 * Branch DAO involved in tests.
 	 */
+	@Autowired
 	private LibraryBranchDao branchDaoImpl;
 	/**
 	 * Copies DAO under test.
 	 */
+	@Autowired
 	private CopiesDao copiesDaoImpl;
 
 	/**
@@ -91,10 +109,7 @@ public class SalemCopiesDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		bookDaoImpl = new BookDaoImpl(conn);
-		branchDaoImpl = new LibraryBranchDaoImpl(conn);
-		copiesDaoImpl = new CopiesDaoImpl(conn);
+		conn = jdbcTemplate.getDataSource().getConnection();
 		testBook = bookDaoImpl.create(SAMPLE_TITLE, null, null);
 		testBranch = branchDaoImpl.create(SAMPLE_BRANCH_NAME, SAMPLE_BRANCH_ADDRESS);
 		copiesDaoImpl.setCopies(testBranch, testBook, NUM_COPIES);
@@ -152,9 +167,9 @@ public class SalemCopiesDaoTest {
 	@DisplayName("Deleting an entry if noOfCopies is 0")
 	@Test
 	public void setEntryWithNoOfCopiesTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = copiesDaoImpl.findAll().size();
 		copiesDaoImpl.setCopies(testBranch, testBook, 0);
-		assertEquals(previousSize - 1, mySQLSize(),
+		assertEquals(previousSize - 1, copiesDaoImpl.findAll().size(),
 				"setting number of copies to 0 deletes row");
 	}
 

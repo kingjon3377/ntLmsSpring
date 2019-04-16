@@ -23,4 +23,8 @@ public interface Service {
 	 * Commit all outstanding operations to the database, if the backend supports transactions.
 	 */
 	void commit() throws TransactionException;
+	/**
+	 * Begin a transaction, if not already in one.
+	 */
+	void beginTransaction() throws TransactionException;
 }

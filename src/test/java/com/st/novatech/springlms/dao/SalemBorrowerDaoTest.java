@@ -1,21 +1,23 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Borrower;
 
@@ -25,6 +27,9 @@ import com.st.novatech.springlms.model.Borrower;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemBorrowerDaoTest {
 	/**
 	 * Sample borrower name for tests.
@@ -48,20 +53,8 @@ public class SalemBorrowerDaoTest {
 	/**
 	 * Borrower DAO under test.
 	 */
+	@Autowired
 	private BorrowerDao borrowerDaoImpl;
-
-	/**
-	 * Database connection.
-	 */
-	private Connection conn;
-	/**
-	 * The table this DAO represents.
-	 */
-	private static final String TABLE = "tbl_borrower";
-	/**
-	 * The primary key field in the table.
-	 */
-	private static final String KEY_FIELD = "cardNo";
 
 	/**
 	 * Set up the database connection, the DAO, and the test data before each test.
@@ -71,8 +64,6 @@ public class SalemBorrowerDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		borrowerDaoImpl = new BorrowerDaoImpl(conn);
 		testBorrower = borrowerDaoImpl.create(SAMPLE_PATRON_NAME,
 				SAMPLE_PATRON_ADDRESS, SAMPLE_PATRON_PHONE);
 	}
@@ -85,17 +76,6 @@ public class SalemBorrowerDaoTest {
 	@AfterEach
 	public void tearThis() throws SQLException {
 		borrowerDaoImpl.delete(testBorrower);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + KEY_FIELD + ") AS size FROM " + TABLE
-				+ ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -107,12 +87,12 @@ public class SalemBorrowerDaoTest {
 	public void createBorrowerTest() throws SQLException {
 		borrowerDaoImpl.delete(testBorrower);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = borrowerDaoImpl.findAll().size();
 
 		testBorrower = borrowerDaoImpl.create(SAMPLE_PATRON_NAME,
 				SAMPLE_PATRON_ADDRESS, SAMPLE_PATRON_PHONE);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = borrowerDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize, "creating borrower adds a row");
 		assertEquals(SAMPLE_PATRON_NAME, testBorrower.getName(),
@@ -130,14 +110,14 @@ public class SalemBorrowerDaoTest {
 	 */
 	@Test
 	public void deleteBorrowerTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = borrowerDaoImpl.findAll().size();
 
 		borrowerDaoImpl.delete(testBorrower);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = borrowerDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize, "deleting borrower deletes row");
-		assertNull(borrowerDaoImpl.get(testBorrower.getCardNo()),
+		assertFalse(borrowerDaoImpl.findById(testBorrower.getCardNo()).isPresent(),
 				"borrower is gone after deletion");
 	}
 
@@ -156,10 +136,10 @@ public class SalemBorrowerDaoTest {
 		final Borrower newBorrower = new Borrower(testBorrower.getCardNo(),
 				newBorrowerName, newBorrowerAddress, newBorrowerPhone);
 
-		borrowerDaoImpl.update(newBorrower);
+		borrowerDaoImpl.save(newBorrower);
 
 		final Borrower updatedborrower = borrowerDaoImpl
-				.get(newBorrower.getCardNo());
+				.findById(newBorrower.getCardNo()).get();
 
 		assertNotNull(updatedborrower, "updated row is still there");
 		assertEquals(newBorrower, updatedborrower, "updated row has expected data");
@@ -173,7 +153,8 @@ public class SalemBorrowerDaoTest {
 	@DisplayName("Get Borrower correctly")
 	@Test
 	public void testGetBorrower() throws SQLException {
-		final Borrower foundBorrower = borrowerDaoImpl.get(testBorrower.getCardNo());
+		final Borrower foundBorrower = borrowerDaoImpl
+				.findById(testBorrower.getCardNo()).get();
 		assertNotNull(foundBorrower, "retrieved row was present");
 		assertEquals(testBorrower, foundBorrower, "retrieved row has expected data");
 	}
@@ -186,20 +167,7 @@ public class SalemBorrowerDaoTest {
 	@DisplayName("Return null if entry not found")
 	@Test
 	public void testGetNotFoundBorrower() throws SQLException {
-		final Borrower foundBorrower = borrowerDaoImpl.get(Integer.MAX_VALUE);
-		assertNull(foundBorrower, "row was not found");
-	}
-
-	/**
-	 * Test that retrieving the whole table works.
-	 *
-	 * @throws SQLException on database error
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Borrower> listOfBorrowers = borrowerDaoImpl.getAll();
-		final int borrowerSize = mySQLSize();
-		assertEquals(listOfBorrowers.size(), borrowerSize,
-				"DAO and SQL agree on number of borrowers");
+		assertFalse(borrowerDaoImpl.findById(Integer.MAX_VALUE).isPresent(),
+				"row was not found");
 	}
 }

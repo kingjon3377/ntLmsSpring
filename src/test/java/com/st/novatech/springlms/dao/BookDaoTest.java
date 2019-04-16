@@ -2,24 +2,27 @@ package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
@@ -32,11 +35,50 @@ import com.st.novatech.springlms.model.Publisher;
  *
  * @author Jonathan Lovelace
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public final class BookDaoTest {
 	/**
 	 * The DAO being tested.
 	 */
+	@Autowired
 	private BookDao testee;
+	/**
+	 * Author DAO used in tests.
+	 */
+	@Autowired
+	private AuthorDao authorDao;
+	/**
+	 * Publisher DAO used in tests.
+	 */
+	@Autowired
+	private PublisherDao publisherDao;
+	/**
+	 * Branch DAO used in tests.
+	 */
+	@Autowired
+	private LibraryBranchDao branchDao;
+	/**
+	 * Borrower DAO used in tests.
+	 */
+	@Autowired
+	private BorrowerDao borrowerDao;
+	/**
+	 * Loans DAO used in tests.
+	 */
+	@Autowired
+	private BookLoansDao loansDao;
+	/**
+	 * Copies DAO used in tests.
+	 */
+	@Autowired
+	private CopiesDao copiesDao;
+	/**
+	 * Connection-to-the-database facade.
+	 */
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	/**
 	 * The connection to the database.
@@ -51,18 +93,7 @@ public final class BookDaoTest {
 	 */
 	@BeforeEach
 	public void setUp() throws SQLException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		testee = new BookDaoImpl(db);
-	}
-
-	/**
-	 * Tear down the database after each test.
-	 *
-	 * @throws SQLException on database error while closing the connection
-	 */
-	@AfterEach
-	public void tearDown() throws SQLException {
-		db.close();
+		db = jdbcTemplate.getDataSource().getConnection();
 	}
 
 	/**
@@ -72,26 +103,17 @@ public final class BookDaoTest {
 	 */
 	@Test
 	public void testUpdate() throws SQLException {
-		final AuthorDao authorDao = new AuthorDaoImpl(db);
-		final PublisherDao publisherDao = new PublisherDaoImpl(db);
 		final Author author = authorDao.create("author name");
 		final Publisher publisher = publisherDao.create("publisher name", "", "");
 		final Book book = testee.create("book title", null, null);
 		book.setAuthor(author);
 		book.setPublisher(publisher);
 		book.setTitle("changed title");
-		testee.update(book);
-		try (Statement statement = db.createStatement();
-				ResultSet rs = statement.executeQuery("SELECT * FROM `tbl_book`")) {
-			rs.next();
-			assertEquals(author.getId(), rs.getInt("authId"),
-					"Update records changed author");
-			assertEquals(publisher.getId(), rs.getInt("pubId"),
-					"Update records changed publisher");
-			assertEquals("changed title", rs.getString("title"),
-					"Update records changed title");
-			assertFalse(rs.next(), "Only one row so far");
-		}
+		testee.save(book);
+		assertEquals(
+				Collections.singletonList(
+						new Book(1, "changed title", author, publisher)),
+				testee.findAll(), "update propagated to database");
 	}
 
 	/**
@@ -101,8 +123,6 @@ public final class BookDaoTest {
 	 */
 	@Test
 	public void testDelete() throws SQLException {
-		final AuthorDao authorDao = new AuthorDaoImpl(db);
-		final PublisherDao publisherDao = new PublisherDaoImpl(db);
 		final Author author = authorDao.create("author name");
 		final Publisher publisher = publisherDao.create("publisher name", "", "");
 		final Book toDelete = new Book(1, "book to delete", author, publisher);
@@ -117,11 +137,11 @@ public final class BookDaoTest {
 							book.getPublisher()),
 					"Created book matches what we intended");
 		}
-		assertEquals(4, testee.getAll().size(), "Has correct row count before delete");
+		assertEquals(4, testee.findAll().size(), "Has correct row count before delete");
 		testee.delete(toDelete);
-		assertEquals(new HashSet<>(expected), new HashSet<>(testee.getAll()),
+		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"Deleted book is gone");
-		assertNull(testee.get(1), "Deleted book is gone");
+		assertFalse(testee.findById(1).isPresent(), "Deleted book is gone");
 	}
 
 	/**
@@ -134,8 +154,6 @@ public final class BookDaoTest {
 	public void testDeleteCopiesCascade() throws SQLException {
 		final Book toRemove = testee.create("book to remove", null, null);
 		final Book toKeep = testee.create("book to keep", null, null);
-		final CopiesDao copiesDao = new CopiesDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Branch branch = branchDao.create("branch name", "");
 		copiesDao.setCopies(branch, toKeep, 3);
 		copiesDao.setCopies(branch, toRemove, 2);
@@ -143,6 +161,8 @@ public final class BookDaoTest {
 				.reduce(0, Integer::sum),
 				"Expected number of copies in the database");
 		testee.delete(toRemove);
+		copiesDao.flush();
+		testee.flush();
 		assertEquals(3, copiesDao.getAllBranchCopies(branch).values().stream()
 				.reduce(0, Integer::sum),
 				"Expected number of copies in the database after deleting book");
@@ -157,17 +177,19 @@ public final class BookDaoTest {
 	public void testDeleteLoansCascade() throws SQLException {
 		final Book toRemove = testee.create("book to remove", null, null);
 		final Book toKeep = testee.create("book to keep", null, null);
-		final BookLoansDao loansDao = new BookLoansDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Branch branch = branchDao.create("branch name", "");
-		final BorrowerDao borrowerDao = new BorrowerDaoImpl(db);
+		branchDao.flush();
 		final Borrower borrower = borrowerDao.create("borrower", "", "");
+		borrowerDao.flush();
 		loansDao.create(toKeep, borrower, branch, null, null);
 		loansDao.create(toRemove, borrower, branch, null, null);
-		assertEquals(2, loansDao.getAll().size(),
+		loansDao.flush();
+		assertEquals(2, loansDao.findAll().size(),
 				"Two outstanding loans before deletion");
 		testee.delete(toRemove);
-		assertEquals(1, loansDao.getAll().size(),
+		loansDao.flush();
+		testee.flush();
+		assertEquals(1, loansDao.findAll().size(),
 				"Loan of deleted book was also removed");
 	}
 	/**
@@ -191,13 +213,13 @@ public final class BookDaoTest {
 				statement.executeUpdate();
 			}
 		}
-		assertEquals(expected.get(0), testee.get(1),
+		assertEquals(expected.get(0), testee.findById(1).get(),
 				"get() returns first author as expected");
-		assertEquals(expected.get(2), testee.get(3),
+		assertEquals(expected.get(2), testee.findById(3).get(),
 				"get() returns third author as expected");
-		assertEquals(expected.get(1), testee.get(2),
+		assertEquals(expected.get(1), testee.findById(2).get(),
 				"get() returns second author as expected");
-		assertNull(testee.get(5), "get() returns null on nonexistent author");
+		assertFalse(testee.findById(5).isPresent(), "get() returns null on nonexistent author");
 	}
 	/**
 	 * Test that getting all authors through the DAO works as expected.
@@ -206,7 +228,7 @@ public final class BookDaoTest {
 	 */
 	@Test
 	public void testGetAll() throws SQLException {
-		assertTrue(testee.getAll().isEmpty(),
+		assertTrue(testee.findAll().isEmpty(),
 				"Before adding any books, getAll() returns empty list");
 		final List<Book> expected = Arrays.asList(new Book(1, "first book", null, null),
 				new Book(2, "second book", null, null), new Book(3, "third book", null, null));
@@ -219,7 +241,7 @@ public final class BookDaoTest {
 				statement.executeUpdate();
 			}
 		}
-		assertEquals(new HashSet<>(expected), new HashSet<>(testee.getAll()),
+		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"getAll() returns expected books");
 	}
 	/**
@@ -239,12 +261,6 @@ public final class BookDaoTest {
 		assertEquals(3, third.getId(), "third book has expected ID");
 		assertEquals("another book", third.getTitle(),
 				"third book has expected title");
-		try (Statement statement = db.createStatement();
-				ResultSet rs = statement.executeQuery(
-						"SELECT COUNT(*) AS `count` FROM `tbl_book`")) {
-			rs.next();
-			assertEquals(3, rs.getInt(1), "table has expected number of rows");
-		}
-		assertThrows(SQLException.class, () -> testee.create(null, null, null));
+		assertEquals(3, testee.findAll().size(), "table has expected number of rows");
 	}
 }

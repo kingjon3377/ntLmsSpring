@@ -10,19 +10,18 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.dao.AuthorDao;
 import com.st.novatech.springlms.dao.BookDao;
 import com.st.novatech.springlms.dao.BookLoansDao;
 import com.st.novatech.springlms.dao.BorrowerDao;
-import com.st.novatech.springlms.dao.InMemoryAuthorDao;
-import com.st.novatech.springlms.dao.InMemoryBookDao;
-import com.st.novatech.springlms.dao.InMemoryBookLoansDao;
-import com.st.novatech.springlms.dao.InMemoryBorrowerDao;
-import com.st.novatech.springlms.dao.InMemoryLibraryBranchDao;
-import com.st.novatech.springlms.dao.InMemoryPublisherDao;
 import com.st.novatech.springlms.dao.LibraryBranchDao;
 import com.st.novatech.springlms.dao.PublisherDao;
 import com.st.novatech.springlms.exception.TransactionException;
@@ -39,55 +38,45 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Jonathan Lovelace
  *
  */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public final class AdministratorServiceTest {
 	/**
-	 * The (list-in-memory) library-branch DAO.
+	 * Library-branch DAO used in tests.
 	 */
+	@Autowired
 	private LibraryBranchDao branchDao;
 	/**
-	 * The (list-in-memory) book DAO.
+	 * Book DAO used in tests.
 	 */
+	@Autowired
 	private BookDao bookDao;
 	/**
-	 * The (list-in-memory) author DAO.
+	 * Author DAO used in tests.
 	 */
+	@Autowired
 	private AuthorDao authorDao;
 	/**
-	 * The (list-in-memory) publisher DAO.
+	 * Publisher DAO used in tests.
 	 */
+	@Autowired
 	private PublisherDao publisherDao;
 	/**
-	 * The (list-in-memory) loans DAO.
+	 * Loans DAO used in tests.
 	 */
+	@Autowired
 	private BookLoansDao loansDao;
 	/**
-	 * The (list-in-memory) borrower DAO.
+	 * Borrower DAO used in tests.
 	 */
+	@Autowired
 	private BorrowerDao borrowerDao;
 	/**
 	 * The service object under test.
 	 */
+	@Autowired
 	private AdministratorService testee;
-
-	private static void noop() {
-		// noop
-	}
-
-	/**
-	 * Set up for each test.
-	 */
-	@BeforeEach
-	public void setUp() {
-		branchDao = new InMemoryLibraryBranchDao();
-		bookDao = new InMemoryBookDao();
-		authorDao = new InMemoryAuthorDao();
-		publisherDao = new InMemoryPublisherDao();
-		loansDao = new InMemoryBookLoansDao();
-		borrowerDao = new InMemoryBorrowerDao();
-		testee = new AdministratorServiceImpl(branchDao, bookDao, authorDao,
-				publisherDao, loansDao, borrowerDao, AdministratorServiceTest::noop,
-				AdministratorServiceTest::noop);
-	}
 
 	/**
 	 * Test book creation.
@@ -98,15 +87,15 @@ public final class AdministratorServiceTest {
 	@Test
 	public void testCreateBook() throws TransactionException, SQLException {
 		final Book bookOne = new Book(1, "first title", null, null);
-		final Author author = new Author(2, "author name");
-		final Publisher publisher = new Publisher(3, "publisher name",
+		final Author author = authorDao.create("author name");
+		final Publisher publisher = publisherDao.create("publisher name",
 				"publisher address", "publisher phone");
 		final Book bookTwo = new Book(2, "second title", author, publisher);
 		assertEquals(bookOne, testee.createBook("first title", null, null),
 				"createBook creates expected book");
 		assertEquals(bookTwo, testee.createBook("second title", author, publisher),
 				"createBook creates expected book");
-		assertEquals(2, bookDao.getAll().size(),
+		assertEquals(2, bookDao.findAll().size(),
 				"After creating two books, two are stored");
 	}
 
@@ -121,9 +110,9 @@ public final class AdministratorServiceTest {
 		final Book original = bookDao.create("original title", null, null);
 		final Book replacement = new Book(1, "new title", null, null);
 		testee.updateBook(replacement);
-		assertEquals(replacement, bookDao.get(1),
+		assertEquals(replacement, bookDao.findById(1).get(),
 				"replacement is now in data store");
-		assertFalse(bookDao.getAll().contains(original),
+		assertFalse(bookDao.findAll().contains(original),
 				"original has vanished from data store");
 	}
 
@@ -139,9 +128,9 @@ public final class AdministratorServiceTest {
 		final Book toDelete = bookDao.create("second book", null, null);
 		bookDao.create("third book", null, null);
 		testee.deleteBook(toDelete);
-		assertFalse(bookDao.getAll().contains(toDelete),
+		assertFalse(bookDao.findAll().contains(toDelete),
 				"Deleted book is gone from data store");
-		assertEquals(2, bookDao.getAll().size(),
+		assertEquals(2, bookDao.findAll().size(),
 				"data store row count is as expected");
 	}
 
@@ -176,7 +165,7 @@ public final class AdministratorServiceTest {
 		final Author authorTwo = testee.createAuthor("author two");
 		final Author authorThree = testee.createAuthor("author three");
 		assertEquals(new HashSet<>(Arrays.asList(authorOne, authorTwo, authorThree)),
-				new HashSet<>(authorDao.getAll()),
+				new HashSet<>(authorDao.findAll()),
 				"Service-created authors are stored");
 	}
 
@@ -191,9 +180,9 @@ public final class AdministratorServiceTest {
 		final Author original = authorDao.create("original name");
 		final Author replacement = new Author(1, "new name");
 		testee.updateAuthor(replacement);
-		assertEquals(replacement, authorDao.get(1),
+		assertEquals(replacement, authorDao.findById(1).get(),
 				"replacement is now in data store");
-		assertFalse(authorDao.getAll().contains(original),
+		assertFalse(authorDao.findAll().contains(original),
 				"original has vanished from data store");
 	}
 
@@ -209,9 +198,9 @@ public final class AdministratorServiceTest {
 		final Author toDelete = authorDao.create("second author");
 		authorDao.create("third author");
 		testee.deleteAuthor(toDelete);
-		assertFalse(authorDao.getAll().contains(toDelete),
+		assertFalse(authorDao.findAll().contains(toDelete),
 				"Deleted author is gone from data store");
-		assertEquals(2, authorDao.getAll().size(),
+		assertEquals(2, authorDao.findAll().size(),
 				"data store row count is as expected");
 	}
 
@@ -244,9 +233,9 @@ public final class AdministratorServiceTest {
 		final Publisher expected = new Publisher(1, "publisher name", "", "");
 		final Publisher actual = testee.createPublisher("publisher name");
 		assertEquals(expected, actual, "createPublisher() creates expected result");
-		assertEquals(expected, publisherDao.get(1),
+		assertEquals(expected, publisherDao.findById(1).get(),
 				"createPublisher() stores to data store");
-		assertEquals(1, publisherDao.getAll().size(),
+		assertEquals(1, publisherDao.findAll().size(),
 				"createPublisher() doesn't create extras");
 	}
 
@@ -265,9 +254,9 @@ public final class AdministratorServiceTest {
 		final Publisher actual = testee.createPublisher("publisher name",
 				"publisher address", "publisher phone");
 		assertEquals(expected, actual, "expected publisher is created");
-		assertEquals(expected, publisherDao.get(2),
+		assertEquals(expected, publisherDao.findById(2).get(),
 				"createPublisher() stores to data store");
-		assertEquals(2, publisherDao.getAll().size(),
+		assertEquals(2, publisherDao.findAll().size(),
 				"createPublisher() doesn't create extras");
 	}
 
@@ -284,9 +273,10 @@ public final class AdministratorServiceTest {
 		final Publisher replacement = new Publisher(1, "new name", "new address",
 				"new phone");
 		testee.updatePublisher(replacement);
-		assertEquals(replacement, publisherDao.get(1),
+		testee.commit();
+		assertEquals(replacement, publisherDao.findById(1).get(),
 				"replacement now in data store");
-		assertFalse(publisherDao.getAll().contains(original),
+		assertFalse(publisherDao.findAll().contains(original),
 				"original gone from data store");
 	}
 
@@ -302,9 +292,9 @@ public final class AdministratorServiceTest {
 		final Publisher toDelete = publisherDao.create("second publisher", "", "");
 		publisherDao.create("third publisher", "", "");
 		testee.deletePublisher(toDelete);
-		assertFalse(publisherDao.getAll().contains(toDelete),
+		assertFalse(publisherDao.findAll().contains(toDelete),
 				"deleted publisher gone from data store");
-		assertEquals(2, publisherDao.getAll().size(),
+		assertEquals(2, publisherDao.findAll().size(),
 				"data store row count as expected");
 	}
 
@@ -341,9 +331,9 @@ public final class AdministratorServiceTest {
 		final Branch expected = new Branch(1, "branch name", "branch address");
 		final Branch actual = testee.createBranch("branch name", "branch address");
 		assertEquals(expected, actual, "createBranch() creates expected result");
-		assertEquals(expected, branchDao.get(1),
+		assertEquals(expected, branchDao.findById(1).get(),
 				"createBranch() stores to data store");
-		assertEquals(1, branchDao.getAll().size(),
+		assertEquals(1, branchDao.findAll().size(),
 				"createBranch() doesn't create extras");
 	}
 
@@ -359,9 +349,9 @@ public final class AdministratorServiceTest {
 		final Branch toDelete = branchDao.create("second branch", "second address");
 		branchDao.create("third branch", "third address");
 		testee.deleteBranch(toDelete);
-		assertFalse(branchDao.getAll().contains(toDelete),
+		assertFalse(branchDao.findAll().contains(toDelete),
 				"deleted branch gone from data store");
-		assertEquals(2, branchDao.getAll().size(),
+		assertEquals(2, branchDao.findAll().size(),
 				"data store row count as expected");
 	}
 
@@ -376,8 +366,9 @@ public final class AdministratorServiceTest {
 		final Branch original = branchDao.create("orignal name", "original address");
 		final Branch replacement = new Branch(1, "new name", "new address");
 		testee.updateBranch(replacement);
-		assertEquals(replacement, branchDao.get(1), "replacement now in data store");
-		assertFalse(branchDao.getAll().contains(original),
+		testee.commit();
+		assertEquals(replacement, branchDao.findById(1).get(), "replacement now in data store");
+		assertFalse(branchDao.findAll().contains(original),
 				"original gone from data store");
 	}
 
@@ -396,9 +387,9 @@ public final class AdministratorServiceTest {
 		final Borrower actual = testee.createBorrower("borrower name",
 				"borrower address", "borrower phone");
 		assertEquals(expected, actual, "expected borrower is created");
-		assertEquals(expected, borrowerDao.get(3),
+		assertEquals(expected, borrowerDao.findById(3).get(),
 				"createBorrower() stores to data store");
-		assertEquals(3, borrowerDao.getAll().size(),
+		assertEquals(3, borrowerDao.findAll().size(),
 				"createBorrower() doesn't create extras");
 	}
 
@@ -415,9 +406,9 @@ public final class AdministratorServiceTest {
 		final Borrower replacement = new Borrower(1, "new name", "new address",
 				"new phone");
 		testee.updateBorrower(replacement);
-		assertEquals(replacement, borrowerDao.get(1),
+		assertEquals(replacement, borrowerDao.findById(1).get(),
 				"replacement now in data store");
-		assertFalse(borrowerDao.getAll().contains(orignal),
+		assertFalse(borrowerDao.findAll().contains(orignal),
 				"original gone from data store");
 	}
 
@@ -434,9 +425,9 @@ public final class AdministratorServiceTest {
 		final Borrower toDelete = borrowerDao.create("third borrower", "", "");
 		borrowerDao.create("fourth borrower", "", "");
 		testee.deleteBorrower(toDelete);
-		assertFalse(borrowerDao.getAll().contains(toDelete),
+		assertFalse(borrowerDao.findAll().contains(toDelete),
 				"deleted borrower gone from data store");
-		assertEquals(3, borrowerDao.getAll().size(),
+		assertEquals(3, borrowerDao.findAll().size(),
 				"data store row count as expected");
 	}
 
@@ -469,9 +460,9 @@ public final class AdministratorServiceTest {
 	@Test
 	public void testOverrideDueDateForLoan()
 			throws SQLException, TransactionException {
-		final Book book = new Book(1, "", null, null);
-		final Borrower borrower = new Borrower(1, "", "", "");
-		final Branch branch = new Branch(1, "", "");
+		final Book book = bookDao.create("", null, null);
+		final Borrower borrower = borrowerDao.create("", "", "");
+		final Branch branch = branchDao.create("", "");
 		final LocalDateTime dateOut = LocalDateTime.now();
 		final LocalDate dueDate = LocalDate.now();
 		loansDao.create(book, borrower, branch, dateOut, dueDate);
@@ -489,12 +480,13 @@ public final class AdministratorServiceTest {
 	 */
 	@Test
 	public void testGetAllLoans() throws SQLException, TransactionException {
-		final List<Loan> expected = Arrays.asList(new Loan(
-				new Book(1, "", null, null), new Borrower(1, "", "", ""),
-				new Branch(1, "", ""), LocalDateTime.now(), LocalDate.now()),
-				new Loan(new Book(2, "", null, null), new Borrower(2, "", "", ""),
-						new Branch(2, "", ""), LocalDateTime.now(),
-						LocalDate.now()));
+		final List<Loan> expected = Arrays.asList(
+				new Loan(bookDao.create("", null, null),
+						borrowerDao.create("", "", ""), branchDao.create("", ""),
+						LocalDateTime.now(), LocalDate.now()),
+				new Loan(bookDao.create("", null, null),
+						borrowerDao.create("", "", ""), branchDao.create("", ""),
+						LocalDateTime.now(), LocalDate.now()));
 		for (final Loan loan : expected) {
 			loansDao.create(loan.getBook(), loan.getBorrower(), loan.getBranch(),
 					loan.getDateOut(), loan.getDueDate());
@@ -529,7 +521,7 @@ public final class AdministratorServiceTest {
 	public void testGetBorrower() throws SQLException {
 		final Borrower b = borrowerDao.create("Ibn Khaldoun", "ADR45", "PHN45");
 
-		assertEquals(b.getName(), borrowerDao.get(b.getCardNo()).getName(),
+		assertEquals(b.getName(), borrowerDao.findById(b.getCardNo()).get().getName(),
 				"borrower has expected name");
 	}
 
@@ -540,7 +532,7 @@ public final class AdministratorServiceTest {
 	@Test
 	public void testGetAuthor() throws SQLException {
 		final Author a = authorDao.create("Ibn Khaldoun");
-		assertEquals(a.getName(), authorDao.get(a.getId()).getName(),
+		assertEquals(a.getName(), authorDao.findById(a.getId()).get().getName(),
 				"retrieved author has expected name");
 	}
 
@@ -550,11 +542,11 @@ public final class AdministratorServiceTest {
 	 */
 	@Test
 	public void testGetBook() throws SQLException {
-		final Author foundAuthor = authorDao.get(1);
-		final Publisher foundPublisher = publisherDao.get(1);
+		final Author foundAuthor = authorDao.findById(1).orElse(null);
+		final Publisher foundPublisher = publisherDao.findById(1).orElse(null);
 		final Book foundBook = bookDao.create("50 down", foundAuthor, foundPublisher);
 
-		assertEquals(foundBook.getTitle(), bookDao.get(foundBook.getId()).getTitle(),
+		assertEquals(foundBook.getTitle(), bookDao.findById(foundBook.getId()).get().getTitle(),
 				"retrieved book has expected title");
 	}
 
@@ -565,7 +557,7 @@ public final class AdministratorServiceTest {
 	@Test
 	public void testGetBranch() throws SQLException {
 		final Branch p = branchDao.create("Branch 1457", "ADR45");
-		assertEquals(p.getName(), branchDao.get(p.getId()).getName(),
+		assertEquals(p.getName(), branchDao.findById(p.getId()).get().getName(),
 				"retrieved branch has expected name");
 	}
 	/**
@@ -575,7 +567,7 @@ public final class AdministratorServiceTest {
 	@Test
 	public void testGetPublisher() throws SQLException {
 		final Publisher foundPublisher = publisherDao.create("Ibn Khaldoun", "ADR45", "PHN45");
-		assertEquals(foundPublisher, publisherDao.get(foundPublisher.getId()),
+		assertEquals(foundPublisher, publisherDao.findById(foundPublisher.getId()).get(),
 				"publisher has expected name");
 	}
 

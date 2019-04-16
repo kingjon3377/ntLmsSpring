@@ -6,18 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
@@ -29,20 +31,10 @@ import com.st.novatech.springlms.model.Loan;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemBookLoansDaoTest {
-	/**
-	 * Connection to the database.
-	 */
-	private static Connection conn = null;
-
-	/**
-	 * The table this DAO accesses.
-	 */
-	private static final String TABLE = "tbl_book_loans";
-	/**
-	 * A key field in the table this DAO accesses.
-	 */
-	private static final String KEY_FIELD = "bookId";
 
 	/**
 	 * Sample book title for tests.
@@ -84,19 +76,23 @@ public class SalemBookLoansDaoTest {
 	/**
 	 * Book DAO involved in tests.
 	 */
-	private static BookDao bookDaoImpl;
+	@Autowired
+	private BookDao bookDaoImpl;
 	/**
 	 * Branch DAO involved in tests.
 	 */
-	private static LibraryBranchDao branchDaoImpl;
+	@Autowired
+	private LibraryBranchDao branchDaoImpl;
 	/**
 	 * Borrower DAO involved in tests.
 	 */
-	private static BorrowerDao borrowerDaoImpl;
+	@Autowired
+	private BorrowerDao borrowerDaoImpl;
 	/**
 	 * Loans DAO under test.
 	 */
-	private static BookLoansDao loansDaoImpl;
+	@Autowired
+	private BookLoansDao loansDaoImpl;
 
 	/**
 	 * Stored book from tests.
@@ -130,11 +126,6 @@ public class SalemBookLoansDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		bookDaoImpl = new BookDaoImpl(conn);
-		branchDaoImpl = new LibraryBranchDaoImpl(conn);
-		borrowerDaoImpl = new BorrowerDaoImpl(conn);
-		loansDaoImpl = new BookLoansDaoImpl(conn);
 		testBook = bookDaoImpl.create(SAMPLE_TITLE, null, null);
 		testBranch = branchDaoImpl.create(SAMPLE_BRANCH_NAME, SAMPLE_BRANCH_ADDRESS);
 		testBorrower = borrowerDaoImpl.create(SAMPLE_PATRON_NAME, SAMPLE_PATRON_ADDRESS, SAMPLE_PATRON_PHONE);
@@ -150,16 +141,6 @@ public class SalemBookLoansDaoTest {
 		bookDaoImpl.delete(testBook);
 		branchDaoImpl.delete(testBranch);
 		borrowerDaoImpl.delete(testBorrower);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + KEY_FIELD + ") AS size FROM " + TABLE + ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -170,11 +151,11 @@ public class SalemBookLoansDaoTest {
 	public void createLoanTest() throws SQLException {
 		loansDaoImpl.delete(testLoan);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = loansDaoImpl.findAll().size();
 
 		testLoan = loansDaoImpl.create(testBook, testBorrower, testBranch, dateOut, dueDate);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = loansDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize, "Creating loan creates record");
 		assertEquals(testBook, testLoan.getBook(), "created loan has expected book");
@@ -190,11 +171,11 @@ public class SalemBookLoansDaoTest {
 	 */
 	@Test
 	public void deleteLoanTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = loansDaoImpl.findAll().size();
 
 		loansDaoImpl.delete(testLoan);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = loansDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize, "deleting loan removes a row");
 		assertNull(loansDaoImpl.get(testLoan.getBook(), testLoan.getBorrower(),
@@ -213,7 +194,7 @@ public class SalemBookLoansDaoTest {
 
 		final Loan newLoan = new Loan(testLoan.getBook(), testLoan.getBorrower(), testLoan.getBranch(), newDateOut, newDueDate);
 
-		loansDaoImpl.update(newLoan);
+		loansDaoImpl.save(newLoan);
 
 		final Loan updatedloans = loansDaoImpl.get(newLoan.getBook(), newLoan.getBorrower(), newLoan.getBranch());
 
@@ -232,7 +213,7 @@ public class SalemBookLoansDaoTest {
 
 		final Loan newLoan = new Loan(testLoan.getBook(), testLoan.getBorrower(), testLoan.getBranch(), null, newDueDate);
 
-		loansDaoImpl.update(newLoan);
+		loansDaoImpl.save(newLoan);
 
 		final Loan updatedLoan = loansDaoImpl.get(newLoan.getBook(), newLoan.getBorrower(), newLoan.getBranch());
 
@@ -252,7 +233,7 @@ public class SalemBookLoansDaoTest {
 
 		final Loan newLoan = new Loan(testLoan.getBook(), testLoan.getBorrower(), testLoan.getBranch(), newDateOut, null);
 
-		loansDaoImpl.update(newLoan);
+		loansDaoImpl.save(newLoan);
 
 		final Loan updatedLoan = loansDaoImpl.get(newLoan.getBook(), newLoan.getBorrower(), newLoan.getBranch());
 
@@ -272,16 +253,4 @@ public class SalemBookLoansDaoTest {
 		assertNotNull(foundLoan, "retrieval finds loan");
 		assertEquals(testLoan, foundLoan, "retrieval finds expected loan");
 	}
-
-	/**
-	 * Test that full-table retrieval works.
-	 * @throws SQLException on DB error
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Loan> listOfLoans = loansDaoImpl.getAll();
-		final int loanSize = mySQLSize();
-		assertEquals(listOfLoans.size(), loanSize, "DAO and SQL agree on number of loans");
-	}
-
 }

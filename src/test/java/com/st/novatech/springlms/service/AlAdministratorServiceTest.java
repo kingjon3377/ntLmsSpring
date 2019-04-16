@@ -2,19 +2,16 @@ package com.st.novatech.springlms.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.dao.AuthorDao;
-import com.st.novatech.springlms.dao.AuthorDaoImpl;
-import com.st.novatech.springlms.dao.InMemoryDBFactory;
 import com.st.novatech.springlms.dao.PublisherDao;
-import com.st.novatech.springlms.dao.PublisherDaoImpl;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
@@ -28,48 +25,25 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Al Amine Ahmed Moussa
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 public class AlAdministratorServiceTest {
 	/**
 	 * The service under test.
 	 */
+	@Autowired
 	private AdministratorService administratorService;
 	/**
 	 * Author DAO used in tests.
 	 */
+	@Autowired
 	private AuthorDao authorDao;
 	/**
 	 * Publisher DAO used in tests.
 	 */
+	@Autowired
 	private PublisherDao publisherDao;
 
-	/**
-	 * The connection to the database.
-	 */
-	private Connection conn;
-
-	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
-	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		administratorService = new AdministratorServiceImpl(conn);
-		authorDao = new AuthorDaoImpl(conn);
-		publisherDao = new PublisherDaoImpl(conn);
-	}
-
-	/**
-	 * Tear down the database after each test.
-	 *
-	 * @throws SQLException on database error while closing the connection
-	 */
-	@AfterEach
-	public void tearDown() throws SQLException {
-		conn.close();
-	}
 
 	/**
 	 * Test that creating a book works.
@@ -81,8 +55,8 @@ public class AlAdministratorServiceTest {
 	public void createBookTest() throws SQLException, TransactionException {
 		final String str = "Admin Book Test";
 
-		final Author author = authorDao.get(1);
-		final Publisher publisher = publisherDao.get(1);
+		final Author author = authorDao.findById(1).orElse(null);
+		final Publisher publisher = publisherDao.findById(1).orElse(null);
 
 		final Book b = administratorService.createBook(str, author, publisher);
 

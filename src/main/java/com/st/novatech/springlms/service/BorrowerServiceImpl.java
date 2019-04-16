@@ -1,7 +1,6 @@
 package com.st.novatech.springlms.service;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -13,17 +12,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+
 import com.st.novatech.springlms.dao.BookDao;
-import com.st.novatech.springlms.dao.BookDaoImpl;
 import com.st.novatech.springlms.dao.BookLoansDao;
-import com.st.novatech.springlms.dao.BookLoansDaoImpl;
 import com.st.novatech.springlms.dao.BorrowerDao;
-import com.st.novatech.springlms.dao.BorrowerDaoImpl;
 import com.st.novatech.springlms.dao.CopiesDao;
-import com.st.novatech.springlms.dao.CopiesDaoImpl;
-import com.st.novatech.springlms.dao.DBConnectionFactory;
 import com.st.novatech.springlms.dao.LibraryBranchDao;
-import com.st.novatech.springlms.dao.LibraryBranchDaoImpl;
 import com.st.novatech.springlms.exception.DeleteException;
 import com.st.novatech.springlms.exception.InsertException;
 import com.st.novatech.springlms.exception.RetrieveException;
@@ -33,30 +32,34 @@ import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
 import com.st.novatech.springlms.model.Loan;
-import com.st.novatech.springlms.util.ThrowingRunnable;
 
 /**
  * The "service" class to help UIs for borrowers.
  *
  * @author Jonathan Lovelace
  */
+@Service
 public final class BorrowerServiceImpl implements BorrowerService {
 	/**
 	 * The DAO for the "branches" table.
 	 */
-	private final LibraryBranchDao branchDao;
+	@Autowired
+	private LibraryBranchDao branchDao;
 	/**
 	 * The DAO for the "loans" table.
 	 */
-	private final BookLoansDao loanDao;
+	@Autowired
+	private BookLoansDao loanDao;
 	/**
 	 * The DAO for the "copies" table.
 	 */
-	private final CopiesDao copiesDao;
+	@Autowired
+	private CopiesDao copiesDao;
 	/**
 	 * The DAO for the "borrowers" table.
 	 */
-	private final BorrowerDao borrowerDao;
+	@Autowired
+	private BorrowerDao borrowerDao;
 	/**
 	 * The clock to get "the current time" from.
 	 */
@@ -65,75 +68,58 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	 * Logger for handling errors in the DAO layer.
 	 */
 	private static final Logger LOGGER = Logger.getLogger(BorrowerService.class.getName());
-	/**
-	 * Method to use to commit a transaction, if the DAO backend supports transactions.
-	 */
-	private final ThrowingRunnable<SQLException> commitHandle;
-	/**
-	 * Method to use to roll back a transaction, if the DAO backend supports transactions.
-	 */
-	private final ThrowingRunnable<SQLException> rollbackHandle;
-	
+
 	/**
 	 * The DAO for the "books" table.
 	 */
-	private final BookDao bookDao;
+	@Autowired
+	private BookDao bookDao;
+	/**
+	 * The currently-active transaction, or null if not in a transaction.
+	 */
+	private TransactionStatus transaction;
+	/**
+	 * The transaction manager provided by Spring.
+	 */
+	@Autowired
+	private PlatformTransactionManager transactionManager;
+
+	@Override
+	public void beginTransaction() throws TransactionException {
+		if (transaction == null) {
+			synchronized (this) {
+				if (transaction == null) {
+					transaction = transactionManager.getTransaction(null);
+				}
+			}
+		}
+	}
 
 	/**
-	 * To construct this service class, the caller must supply instances of each DAO
-	 * it uses, a clock to get "the current date," and method references to commit
-	 * and roll back transactions.
+	 * To construct this service class, the caller must supply a clock to get "the
+	 * current date."
 	 *
-	 * @param branchDao   the library-branch DAO.
-	 * @param loanDao     the loan DAO
-	 * @param copiesDao   the copies DAO
-	 * @param borrowerDao the borrower DAO
-	 * @param commit      the method handle to commit a transaction, if the backend
-	 *                    supports that
-	 * @param rollback    the method handle to roll back a transaction, if the
-	 *                    backend supports that
+	 * @param clock a clock (time-zone) to get "the current date".
 	 */
-	public BorrowerServiceImpl(final LibraryBranchDao branchDao, final BookLoansDao loanDao, final CopiesDao copiesDao,
-			final BorrowerDao borrowerDao, final BookDao bookDao, final Clock clock,
-			final ThrowingRunnable<SQLException> commit, final ThrowingRunnable<SQLException> rollback) {
-		this.branchDao = branchDao;
-		this.loanDao = loanDao;
-		this.copiesDao = copiesDao;
-		this.borrowerDao = borrowerDao;
+	public BorrowerServiceImpl(final Clock clock) {
 		this.clock = clock;
-		this.bookDao = bookDao;
-		commitHandle = commit;
-		rollbackHandle = rollback;
 	}
 
 	/**
-	 * To construct this service class using this constructor, the caller must
-	 * merely supply a connection to the database.
-	 * 
-	 * @param db the connection to the database
-	 * @throws SQLException on error setting up DAOs.
-	 */
-	public BorrowerServiceImpl(final Connection db) throws SQLException {
-		this(new LibraryBranchDaoImpl(db), new BookLoansDaoImpl(db), new CopiesDaoImpl(db), new BorrowerDaoImpl(db),
-				new BookDaoImpl(db), Clock.systemDefaultZone(), db::commit, db::rollback);
-	}
-
-	/**
-	 * Constructor that uses the default DB connection factory to supply the
-	 * database connection and uses the default DAO implementations.
-	 * 
+	 * Constructor that uses the default time zone.
+	 *
 	 * @throws IOException  on I/O error reading DB configuration
 	 * @throws SQLException on error setting up the database or DAOs
 	 */
 	public BorrowerServiceImpl() throws IOException, SQLException {
-		this(DBConnectionFactory.getDatabaseConnection());
+		this(Clock.systemDefaultZone());
 	}
 
 	@Override
 	public List<Branch> getAllBranches() throws TransactionException {
 		try {
-			return branchDao.getAll();
-		} catch (final SQLException except) {
+			return branchDao.findAll();
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE,  "SQL error while getting all branches", except);
 			throw rollback(new UnknownSQLException("Getting all branches failed", except));
 		}
@@ -155,7 +141,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			} else {
 				return null; // TODO: Add getLoan() method to interface
 			}
-		} catch (final SQLException except) {
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while creating a loan record", except);
 			throw rollback(new InsertException("Creating a loan failed", except));
 		}
@@ -166,7 +152,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			throws TransactionException {
 		try {
 			return copiesDao.getAllBranchCopies(branch);
-		} catch (final SQLException except) {
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting branch copies", except);
 			throw rollback(new UnknownSQLException("Getting branch copy records failed", except));
 		}
@@ -178,7 +164,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		final Optional<Loan> loan;
 		try {
 			loan = Optional.ofNullable(loanDao.get(book, borrower, branch));
-		} catch (final SQLException except) {
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting loan details", except);
 			throw rollback(new UnknownSQLException("Getting loan details failed", except));
 		}
@@ -189,13 +175,13 @@ public final class BorrowerServiceImpl implements BorrowerService {
 				try {
 					final int copies = copiesDao.getCopies(branch, book);
 					copiesDao.setCopies(branch, book, copies + 1);
-				} catch (final SQLException except) {
+				} catch (final DataAccessException except) {
 					LOGGER.log(Level.SEVERE, "SQL error while incrementing copies on return", except);
 					throw rollback(new UnknownSQLException("Incrementing copies on return failed", except));
 				}
 				try {
 					loanDao.delete(loan.get());
-				} catch (final SQLException except) {
+				} catch (final DataAccessException except) {
 					LOGGER.log(Level.SEVERE, "SQL error while removing a loan record", except);
 					throw rollback(new DeleteException("Removing loan record failed", except));
 				}
@@ -217,10 +203,10 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	public List<Loan> getAllBorrowedBooks(final Borrower borrower)
 			throws TransactionException {
 		try {
-			return loanDao.getAll().parallelStream()
+			return loanDao.findAll().parallelStream()
 					.filter(loan -> borrower.equals(loan.getBorrower()))
 					.collect(Collectors.toList());
-		} catch (final SQLException except) {
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting loan records", except);
 			throw rollback(new UnknownSQLException("Getting loan records failed", except));
 		}
@@ -229,8 +215,8 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	@Override
 	public Borrower getBorrower(final int cardNo) throws TransactionException {
 		try {
-			return borrowerDao.get(cardNo);
-		} catch (final SQLException except) {
+			return borrowerDao.findById(cardNo).orElse(null);
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
 			throw rollback(new UnknownSQLException("Getting borrower record failed", except));
 		}
@@ -238,28 +224,36 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	@Override
 	public void commit() throws TransactionException {
 		try {
-			commitHandle.run();
-		} catch (final SQLException except) {
+			synchronized (this) {
+				if (transaction != null) {
+					transactionManager.commit(transaction);
+					transaction = null;
+				}
+			}
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "Error of some kind while committing transaction", except);
 			throw new UnknownSQLException("Committing the transaction failed", except);
 		}
 	}
 	private <E extends Exception> E rollback(final E pending) {
 		try {
-			rollbackHandle.run();
-		} catch (final SQLException except) {
+			transactionManager.rollback(transaction);
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "Further error while rolling back transaction", except);
 			pending.addSuppressed(except);
+		}
+		synchronized (this) {
+			transaction = null;
 		}
 		return pending;
 	}
 
 	@Override
-	public Branch getbranch(int branchId) throws TransactionException {
+	public Branch getbranch(final int branchId) throws TransactionException {
 		Branch foundbranch = null;
 		try {
-			foundbranch = branchDao.get(branchId);
-		} catch (final SQLException except) {
+			foundbranch = branchDao.findById(branchId).orElse(null);
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
 			throw rollback(new RetrieveException("Getting a branch failed", except));
 		}
@@ -267,11 +261,11 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Book getBook(int bookId) throws TransactionException {
+	public Book getBook(final int bookId) throws TransactionException {
 		Book foundbook = null;
 		try {
-			foundbook = bookDao.get(bookId);
-		} catch (final SQLException except) {
+			foundbook = bookDao.findById(bookId).get();
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
 			throw rollback(new RetrieveException("Getting a book failed", except));
 		}
@@ -279,11 +273,13 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Loan getLoan(int cardNo, int branchId, int bookId) throws TransactionException {
+	public Loan getLoan(final int cardNo, final int branchId, final int bookId) throws TransactionException {
 		Loan foundLoan = null;
 		try {
-			foundLoan = loanDao.get(bookDao.get(bookId), borrowerDao.get(cardNo), branchDao.get(branchId));
-		} catch (final SQLException except) {
+			foundLoan = loanDao.get(bookDao.findById(bookId).get(),
+					borrowerDao.findById(cardNo).get(),
+					branchDao.findById(branchId).get());
+		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a Loan record", except);
 			throw rollback(new RetrieveException("Getting a Loan failed", except));
 		}
