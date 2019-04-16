@@ -5,20 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -45,26 +40,6 @@ class PublisherDaoTest {
 	 */
 	@Autowired
 	private BookDao bookDao;
-	/**
-	 * Database-connection wrapper.
-	 */
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-	/**
-	 * The connection to the database.
-	 */
-	private Connection db;
-
-	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
-	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = jdbcTemplate.getDataSource().getConnection();
-	}
 
 	/**
 	 * Test that creating a publisher through the DAO works as expected.
@@ -129,18 +104,9 @@ class PublisherDaoTest {
 				new Publisher(2, "publisher one"), new Publisher(3, "publisher two"),
 				new Publisher(4, "publisher three"),
 				new Publisher(5, "publisher 4"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			statement.setString(1, toDelete.getName());
-			statement.setString(2, toDelete.getAddress());
-			statement.setString(3, toDelete.getPhone());
-			statement.executeUpdate();
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		testee.create(toDelete.getName(), toDelete.getAddress(), toDelete.getPhone());
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
 		assertEquals(5, testee.findAll().size(), "Has correct size before delete");
 		testee.delete(toDelete);
@@ -180,14 +146,8 @@ class PublisherDaoTest {
 				new Publisher(1, "one author", "one address", "one phone"),
 				new Publisher(2, "two author", "two address", "two phone"),
 				new Publisher(3, "three author", "three address", "three phone"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
 		assertEquals(expected.get(0), testee.findById(1).get(),
 				"get() returns first author as expected");
@@ -210,14 +170,8 @@ class PublisherDaoTest {
 				new Publisher(1, "one author", "one address", "one phone"),
 				new Publisher(2, "two author", "two address", "two phone"),
 				new Publisher(3, "three author", "three address", "three phone"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
 		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"getAll() returns expected authors");

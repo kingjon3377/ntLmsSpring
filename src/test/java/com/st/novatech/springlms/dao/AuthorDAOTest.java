@@ -5,21 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -47,26 +42,6 @@ public final class AuthorDAOTest {
 	 */
 	@Autowired
 	private BookDao bookDao;
-	/**
-	 * The wrapper around the connection to the database.
-	 */
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-	/**
-	 * The connection to the database.
-	 */
-	private Connection db;
-
-	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
-	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = jdbcTemplate.getDataSource().getConnection();
-	}
 
 	/**
 	 * Test that updating authors through the DAO works as expected.
@@ -102,15 +77,8 @@ public final class AuthorDAOTest {
 		final List<Author> expected = Arrays.asList(new Author(2, "author one"),
 				new Author(3, "author two"), new Author(4, "author three"),
 				new Author(5, "author 4"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_author` (`authorName`) VALUES(?)")) {
-			statement.setString(1, toDelete.getName());
-			statement.executeUpdate();
-			for (final Author author : expected) {
-				statement.setString(1, author.getName());
-				statement.executeUpdate();
-			}
-		}
+		testee.create("author to delete");
+		expected.stream().map(Author::getName).forEachOrdered(testee::create);
 		assertEquals(5, testee.findAll().size(), "Has correct size before delete");
 		testee.delete(toDelete);
 		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
@@ -148,12 +116,8 @@ public final class AuthorDAOTest {
 	public void testGet() throws SQLException {
 		final List<Author> expected = Arrays.asList(new Author(1, "one author"),
 				new Author(2, "two author"), new Author(3, "three author"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_author` (`authorName`) VALUES(?)")) {
-			for (final Author author : expected) {
-				statement.setString(1, author.getName());
-				statement.executeUpdate();
-			}
+		for (final Author author : expected) {
+			testee.create(author.getName());
 		}
 		assertEquals(expected.get(0), testee.findById(1).get(),
 				"get() returns first author as expected");
@@ -175,12 +139,8 @@ public final class AuthorDAOTest {
 				"Before adding any authors, getAll() returns empty list");
 		final List<Author> expected = Arrays.asList(new Author(1, "first author"),
 				new Author(2, "second author"), new Author(3, "third author"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_author` (`authorName`) VALUES(?)")) {
-			for (final Author author : expected) {
-				statement.setString(1, author.getName());
-				statement.executeUpdate();
-			}
+		for (final Author author : expected) {
+			testee.create(author.getName());
 		}
 		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"getAll() returns expected authors");

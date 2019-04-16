@@ -4,22 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -74,27 +68,6 @@ public final class BookDaoTest {
 	 */
 	@Autowired
 	private CopiesDao copiesDao;
-	/**
-	 * Connection-to-the-database facade.
-	 */
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
-
-	/**
-	 * The connection to the database.
-	 */
-	private Connection db;
-
-	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
-	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = jdbcTemplate.getDataSource().getConnection();
-	}
 
 	/**
 	 * Test that updating authors through the DAO works as expected.
@@ -204,14 +177,8 @@ public final class BookDaoTest {
 				new Book(2, "two book", null, null),
 				new Book(3, "red book", null, null),
 				new Book(4, "blue book", null, null));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_book` (`title`, `authId`, `pubId`) VALUES(?, ?, ?)")) {
-			for (final Book book : expected) {
-				statement.setString(1, book.getTitle());
-				statement.setNull(2, Types.INTEGER);
-				statement.setNull(3, Types.INTEGER);
-				statement.executeUpdate();
-			}
+		for (final Book book : expected) {
+			testee.create(book.getTitle(), null, null);
 		}
 		assertEquals(expected.get(0), testee.findById(1).get(),
 				"get() returns first author as expected");
@@ -232,14 +199,8 @@ public final class BookDaoTest {
 				"Before adding any books, getAll() returns empty list");
 		final List<Book> expected = Arrays.asList(new Book(1, "first book", null, null),
 				new Book(2, "second book", null, null), new Book(3, "third book", null, null));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_book` (`title`, `authId`, `pubId`) VALUES(?, ?, ?)")) {
-			for (final Book book : expected) {
-				statement.setString(1, book.getTitle());
-				statement.setNull(2, Types.INTEGER);
-				statement.setNull(3, Types.INTEGER);
-				statement.executeUpdate();
-			}
+		for (final Book book : expected) {
+			testee.create(book.getTitle(), null, null);
 		}
 		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"getAll() returns expected books");
