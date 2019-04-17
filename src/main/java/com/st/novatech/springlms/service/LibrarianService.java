@@ -58,4 +58,10 @@ public interface LibrarianService extends Service {
 	 * @return a book in the database
 	 */
 	Book getBook(int bookId) throws TransactionException;
+	/**
+	 * Get the number of copies of a given book on a given branch in the database.
+	 *
+	 * @return the number of copies
+	 */
+	int getCopies(Book book,Branch branch) throws TransactionException;
 }

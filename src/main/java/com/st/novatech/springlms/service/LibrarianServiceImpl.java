@@ -167,4 +167,8 @@ public final class LibrarianServiceImpl implements LibrarianService {
 		}
 		return pending;
 	}
+	@Override
+	public int getCopies(final Book book, final Branch branch) throws TransactionException {
+		return copiesDao.getCopies(branch, book);
+	}
 }
