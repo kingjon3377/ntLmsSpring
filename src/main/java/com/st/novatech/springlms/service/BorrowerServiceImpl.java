@@ -38,7 +38,7 @@ import com.st.novatech.springlms.model.Loan;
  * @author Jonathan Lovelace
  */
 @Service("BorrowerService")
-public final class BorrowerServiceImpl implements BorrowerService {
+public class BorrowerServiceImpl implements BorrowerService {
 	/**
 	 * The DAO for the "branches" table.
 	 */
