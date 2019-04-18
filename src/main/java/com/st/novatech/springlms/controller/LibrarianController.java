@@ -3,10 +3,10 @@ package com.st.novatech.springlms.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,17 +30,17 @@ public final class LibrarianController {
 	@Autowired
 	private LibrarianService service;
 
-	@RequestMapping({ "/branches", "/branches/" })
+	@GetMapping({ "/branches", "/branches/" })
 	public List<Branch> getBranches() throws TransactionException {
 		return service.getAllBranches();
 	}
 
-	@RequestMapping({ "/books", "/books/" })
+	@GetMapping({ "/books", "/books/" })
 	public List<Book> getBooks() throws TransactionException {
 		return service.getAllBooks();
 	}
 
-	@RequestMapping({ "/branch/{branchId}", "/branch/{branchId}/" })
+	@GetMapping({ "/branch/{branchId}", "/branch/{branchId}/" })
 	public Branch getBranch(@PathVariable("branchId") final int branchId)
 			throws TransactionException {
 		final Branch branch = service.getbranch(branchId);
@@ -51,7 +51,7 @@ public final class LibrarianController {
 		}
 	}
 
-	@RequestMapping({ "/book/{bookId}", "/book/{bookId}/" })
+	@GetMapping({ "/book/{bookId}", "/book/{bookId}/" })
 	public Book getBook(@PathVariable("bookId") final int bookId)
 			throws TransactionException {
 		final Book book = service.getBook(bookId);
@@ -62,8 +62,7 @@ public final class LibrarianController {
 		}
 	}
 
-	@RequestMapping(path = { "/branch/{branchId}",
-			"/branch/{branchId}/" }, method = RequestMethod.PUT)
+	@PutMapping({ "/branch/{branchId}", "/branch/{branchId}/" })
 	public Branch updateBranch(@PathVariable("branchId") final int branchId,
 			@RequestBody final Branch input) throws TransactionException {
 		final Branch branch = service.getbranch(branchId);
@@ -77,8 +76,8 @@ public final class LibrarianController {
 		}
 	}
 
-	@RequestMapping(path = { "/branch/{branchId}/book/{bookId}",
-			"/branch/{branchId}/book/{bookId}/" }, method = RequestMethod.PUT)
+	@PutMapping({ "/branch/{branchId}/book/{bookId}",
+			"/branch/{branchId}/book/{bookId}/" })
 	public BranchCopies updateBranchCopies(@PathVariable("branchId") final int branchId,
 			@PathVariable("bookId") final int bookId,
 			@RequestParam("noOfCopies") final int copies)
@@ -91,8 +90,8 @@ public final class LibrarianController {
 				foundNumberOfCopies);
 	}
 
-	@RequestMapping(path = { "/branch/{branchId}/book/{bookId}",
-			"/branch/{branchId}/book/{bookId}" }, method = RequestMethod.GET)
+	@GetMapping({ "/branch/{branchId}/book/{bookId}",
+			"/branch/{branchId}/book/{bookId}" })
 	public BranchCopies getBranchCopies(@PathVariable("branchId") final int branchId,
 			@PathVariable("bookId") final int bookId) throws TransactionException {
 		return new BranchCopies(service.getBook(bookId),
@@ -100,7 +99,7 @@ public final class LibrarianController {
 						service.getBook(bookId), service.getbranch(branchId)));
 	}
 
-	@RequestMapping({ "/branches/books/copies", "/branches/books/copies/" })
+	@GetMapping({ "/branches/books/copies", "/branches/books/copies/" })
 	public List<BranchCopies> getAllCopies()
 			throws TransactionException {
 		return service.getAllCopies();

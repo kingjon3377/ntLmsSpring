@@ -4,10 +4,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,7 +43,7 @@ public final class ExecutiveController {
 	 * @throws TransactionException on internal error.
 	 */
 	// TODO: Uncomment once controllers are split for service-discovery refactoring
-//	@RequestMapping({"/branches", "/branches/"})
+//	@GetMapping({"/branches", "/branches/"})
 	public List<Branch> getBranches() throws TransactionException {
 		return service.getAllBranches();
 	}
@@ -50,7 +52,7 @@ public final class ExecutiveController {
 	 * @return the list of all borrowers in the database
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping({"/borrowers", "/borrowers/"})
+	@GetMapping({"/borrowers", "/borrowers/"})
 	public List<Borrower> getBorrowers() throws TransactionException {
 		return service.getAllBorrowers();
 	}
@@ -61,7 +63,7 @@ public final class ExecutiveController {
 	 * @throws TransactionException if branch not found, or on internal error
 	 */
 	// TODO: Uncomment once controllers are split for service-discovery refactoring
-//	@RequestMapping(path = {"/branch/{branchId}", "/branch/{branchId}/"}, method = RequestMethod.GET)
+//	@GetMapping({"/branch/{branchId}", "/branch/{branchId}/"})
 	public Branch getBranch(@PathVariable("branchId") final int branchId)
 			throws TransactionException {
 		final Branch branch = service.getBranch(branchId);
@@ -77,7 +79,7 @@ public final class ExecutiveController {
 	 * @return the borrower with that card number
 	 * @throws TransactionException if borrower not found, or on internal error
 	 */
-	@RequestMapping({"/borrower/{cardNumber}", "/borrower/{cardNumber}/"})
+	@GetMapping({"/borrower/{cardNumber}", "/borrower/{cardNumber}/"})
 	public Borrower getBorrower(@PathVariable("cardNumber") final int cardNumber)
 			throws TransactionException {
 		final Borrower borrower = service.getBorrower(cardNumber);
@@ -95,8 +97,7 @@ public final class ExecutiveController {
 	 * @throws TransactionException if author not found or on internal error
 	 */
 	// TODO: Uncomment once controllers are split for service-discovery refactoring
-//	@RequestMapping(path = { "/branch/{branchId}",
-//			"/branch/{branchId}/" }, method = RequestMethod.PUT)
+//	@PutMapping({ "/branch/{branchId}", "/branch/{branchId}/" })
 	public Branch updateBranch(@PathVariable("branchId") final int branchId,
 			@RequestBody final Branch input) throws TransactionException {
 		final Branch branch = service.getBranch(branchId);
@@ -116,8 +117,7 @@ public final class ExecutiveController {
 	 * @return the updated borrower
 	 * @throws TransactionException if borrower not found or on internal error
 	 */
-	@RequestMapping(path = { "/borrower/{cardNumber}",
-			"/borrower/{cardNumber}/" }, method = RequestMethod.PUT)
+	@PutMapping({ "/borrower/{cardNumber}", "/borrower/{cardNumber}/" })
 	public Borrower updateBorrower(@PathVariable("cardNumber") final int cardNumber,
 			@RequestBody final Borrower input) throws TransactionException {
 		final Borrower borrower = service.getBorrower(cardNumber);
@@ -138,7 +138,7 @@ public final class ExecutiveController {
 	 * @return the created branch
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = {"/branch", "/branch/"}, method = RequestMethod.POST)
+	@PostMapping({"/branch", "/branch/"})
 	public Branch createBranch(@RequestParam("name") final String name,
 			@RequestParam(name = "address", defaultValue = "") final String address)
 			throws TransactionException {
@@ -152,7 +152,7 @@ public final class ExecutiveController {
 	 * @return the created borrower record
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = {"/borrower", "/borrower/"}, method = RequestMethod.POST)
+	@PostMapping({"/borrower", "/borrower/"})
 	public Borrower createBorrower(@RequestParam("name") final String name,
 			@RequestParam(name = "address", defaultValue = "") final String address,
 			@RequestParam(name = "phone", defaultValue = "") final String phone)
@@ -164,7 +164,7 @@ public final class ExecutiveController {
 	 * @param branchId the ID of the branch to delete.
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = {"/branch/{branchId}", "/branch/{branchId}/"}, method = RequestMethod.DELETE)
+	@DeleteMapping({"/branch/{branchId}", "/branch/{branchId}/"})
 	public void deleteBranch(@PathVariable("branchId") final int branchId) throws TransactionException {
 		final Branch branch = service.getBranch(branchId);
 		if (branch != null) {
@@ -176,8 +176,7 @@ public final class ExecutiveController {
 	 * @param cardNumber the card number of the borrower to delete from the database
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = { "/borrower/{cardNumber}",
-			"/borrower/{cardNumber}/" }, method = RequestMethod.DELETE)
+	@DeleteMapping({ "/borrower/{cardNumber}", "/borrower/{cardNumber}/" })
 	public void deleteBorrower(@PathVariable("cardNumber") final int cardNumber)
 			throws TransactionException {
 		final Borrower borrower = service.getBorrower(cardNumber);
@@ -194,7 +193,7 @@ public final class ExecutiveController {
 	 * @return the updated loan record
 	 * @throws TransactionException if no such borrower, branch, book, or loan, or on internal error
 	 */
-	@RequestMapping(path = "/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due", method = RequestMethod.PUT)
+	@PutMapping("/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due")
 	public Loan overrideDueDate(@PathVariable("bookId") final int bookId,
 			@PathVariable("branchId") final int branchId,
 			@PathVariable("borrowerId") final int borrowerId,
@@ -222,7 +221,7 @@ public final class ExecutiveController {
 	 * @return the updated loan record
 	 * @throws TransactionException if no such borrower, branch, book, or loan, or on internal error
 	 */
-	@RequestMapping(path = "/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due")
+	@GetMapping("/loan/book/{bookId}/branch/{branchId}/borrower/{borrowerId}/due")
 	public LocalDate getDueDate(@PathVariable("bookId") final int bookId,
 			@PathVariable("branchId") final int branchId,
 			@PathVariable("borrowerId") final int borrowerId) throws TransactionException {
