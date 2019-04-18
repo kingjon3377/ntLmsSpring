@@ -38,14 +38,14 @@ public class BorrowerControllerTest {
 	private MockMvc mockMvc;
 
 	@BeforeEach
-	void setup() {
+	public void setUp() {
 		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
 	}
 
 	@DisplayName("Get a borrower that exists")
 	@Disabled("Requires databse setup that isn't provided here")
 	@Test
-	void getBorrower() throws Exception {
+	public void testGetBorrower() throws Exception {
 		mockMvc.perform(get("/borrower/1")).andExpect(status().isOk());
 	}
 }
