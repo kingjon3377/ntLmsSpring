@@ -2,6 +2,9 @@ package com.st.novatech.springlms.dao;
 
 import java.sql.SQLException;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import com.st.novatech.springlms.model.Publisher;
 
 /**
@@ -10,7 +13,8 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public interface PublisherDao extends Dao<Publisher> {
+@Repository
+public interface PublisherDao extends JpaRepository<Publisher, Integer> {
 	/**
 	 * Create a publisher object and add the publisher to the database.
 	 * @param publisherName the name of the publisher
@@ -19,5 +23,7 @@ public interface PublisherDao extends Dao<Publisher> {
 	 * @return the newly created publisher object
 	 * @throws SQLException on unexpected error in dealing with the database
 	 */
-	Publisher create(String publisherName, String publisherAddress, String publisherPhone) throws SQLException;
+	default Publisher create(final String publisherName, final String publisherAddress, final String publisherPhone) {
+		return save(new Publisher(0, publisherName, publisherAddress, publisherPhone));
+	}
 }

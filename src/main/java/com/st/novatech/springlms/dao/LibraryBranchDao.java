@@ -2,6 +2,9 @@ package com.st.novatech.springlms.dao;
 
 import java.sql.SQLException;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import com.st.novatech.springlms.model.Branch;
 
 /**
@@ -10,7 +13,8 @@ import com.st.novatech.springlms.model.Branch;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public interface LibraryBranchDao extends Dao<Branch> {
+@Repository
+public interface LibraryBranchDao extends JpaRepository<Branch, Integer> {
 	/**
 	 * Create a library-branch object and add it to the database.
 	 *
@@ -19,5 +23,7 @@ public interface LibraryBranchDao extends Dao<Branch> {
 	 * @return the newly created branch object
 	 * @throws SQLException on unexpected error in dealing with the database
 	 */
-	Branch create(String branchName, String branchAddress) throws SQLException;
+	default Branch create(final String branchName, final String branchAddress) {
+		return save(new Branch(0, branchName, branchAddress));
+	}
 }

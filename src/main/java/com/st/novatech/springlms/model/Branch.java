@@ -1,6 +1,14 @@
 package com.st.novatech.springlms.model;
 
+import java.io.Serializable;
 import java.util.Objects;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
  * A branch of a library.
@@ -8,20 +16,38 @@ import java.util.Objects;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public class Branch {
+@Entity
+@Table(name = "tbl_library_branch")
+public class Branch implements Serializable {
+	/**
+	 * Serialization version. Increment on any change to class structure that is
+	 * pushed to production.
+	 */
+	private static final long serialVersionUID = 1L;
 	/**
 	 * The ID number used to identify this branch in the database.
 	 */
+	@Id
+	@Column(name = "branchId")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private final int id;
 	/**
 	 * The name of the branch.
 	 */
+	@Column(name = "branchName")
 	private String name;
 	/**
 	 * The address of the branch.
 	 */
+	@Column(name = "branchAddress")
 	private String address;
 
+	/**
+	 * No-arg constructor required for JPA.
+	 */
+	protected Branch() {
+		this(0, "", "");
+	}
 	/**
 	 * To construct a branch object, callers must supply its ID number, name, and
 	 * address.

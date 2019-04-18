@@ -223,7 +223,7 @@ public interface AdministratorService extends Service {
 	 * 
 	 * @return a branch in the database
 	 */
-	Branch getbranch(int branchId) throws TransactionException;
+	Branch getBranch(int branchId) throws TransactionException;
 
 	/**
 	 * Get a book in the database.

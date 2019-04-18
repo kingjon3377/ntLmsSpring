@@ -2,6 +2,9 @@ package com.st.novatech.springlms.dao;
 
 import java.sql.SQLException;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import com.st.novatech.springlms.model.Author;
 
 /**
@@ -10,7 +13,8 @@ import com.st.novatech.springlms.model.Author;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
-public interface AuthorDao extends Dao<Author> {
+@Repository
+public interface AuthorDao extends JpaRepository<Author, Integer> {
 	/**
 	 * Create an author object and add it to the database.
 	 *
@@ -18,5 +22,7 @@ public interface AuthorDao extends Dao<Author> {
 	 * @return the created author
 	 * @throws SQLException on unexpected error dealing with the database
 	 */
-	Author create(String authorName) throws SQLException;
+	default Author create(final String authorName) {
+		return save(new Author(0, authorName));
+	}
 }

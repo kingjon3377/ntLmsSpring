@@ -5,17 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.st.novatech.springlms.dao.InMemoryDBFactory;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
@@ -27,6 +30,9 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemLibrarianServiceTest {
 	/**
 	 * Sample book title for tests.
@@ -61,17 +67,14 @@ public class SalemLibrarianServiceTest {
 	private static int noOfCopies = 50;
 
 	/**
-	 * The connection to the database.
-	 */
-	private Connection db;
-
-	/**
 	 * Administrator service involved in tests.
 	 */
+	@Autowired
 	private AdministratorService adminService;
 	/**
 	 * Librarian service under test.
 	 */
+	@Autowired
 	private LibrarianService libService;
 
 	/**
@@ -83,28 +86,11 @@ public class SalemLibrarianServiceTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, TransactionException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		adminService = new AdministratorServiceImpl(db);
-		libService = new LibrarianServiceImpl(db);
 		testBook = adminService.createBook(SAMPLE_TITLE, null, null);
 		testBranch = adminService.createBranch(SAMPLE_BRANCH_NAME,
 				SAMPLE_BRANCH_ADDRESS);
 		// due date is two weeks from now
 		libService.setBranchCopies(testBranch, testBook, noOfCopies);
-	}
-
-	/**
-	 * Delete test data and tear down database connection after each test.
-	 * @throws SQLException on database error
-	 * @throws TransactionException on error caught by a service
-	 */
-	@AfterEach
-	public void tearDown() throws SQLException, TransactionException {
-		// FIXME?: WARNING maybe something that doesn't call the method we are trying to test
-		adminService.deleteBook(testBook);
-		adminService.deleteBranch(testBranch);
-		libService.setBranchCopies(testBranch, testBook, 0);
-		db.close();
 	}
 
 	/**
@@ -169,7 +155,7 @@ public class SalemLibrarianServiceTest {
 	@Test
 	public void testGetBranch() throws SQLException, TransactionException {
 		final Branch branch = adminService.createBranch("Branch 1457", "ADR45");
-		assertEquals(branch.getName(), adminService.getbranch(branch.getId()).getName(),
+		assertEquals(branch.getName(), adminService.getBranch(branch.getId()).getName(),
 				"retrieved branch has expected name");
 	}
 }

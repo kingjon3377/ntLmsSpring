@@ -1,21 +1,23 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Publisher;
 
@@ -24,6 +26,9 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemPublisherDaoTest {
 	/**
 	 * Sample publisher name for tests.
@@ -39,13 +44,9 @@ public class SalemPublisherDaoTest {
 	private static final String SAMPLE_PUBLISHER_PHONE = "1234567890";
 
 	/**
-	 * Database connection.
-	 */
-	private Connection conn;
-
-	/**
 	 * Publisher DAO under test.
 	 */
+	@Autowired
 	private PublisherDao publisherDaoImpl;
 	/**
 	 * Stored publisher from tests.
@@ -53,14 +54,6 @@ public class SalemPublisherDaoTest {
 	 * <p>(TODO: Is this ever read without being first written to in the same test?)
 	 */
 	private Publisher testPublisher;
-	/**
-	 * The database table this DAO deals with.
-	 */
-	private static final String TABLE = "tbl_publisher";
-	/**
-	 * The primary key field in the database table.
-	 */
-	private static final String PRIMARY_KEY = "publisherId";
 
 	/**
 	 * Set up database connection, DAO, and test data before each test.
@@ -70,8 +63,6 @@ public class SalemPublisherDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		publisherDaoImpl = new PublisherDaoImpl(conn);
 		testPublisher = publisherDaoImpl.create(SAMPLE_PUBLISHER_NAME,
 				SAMPLE_PUBLISHER_ADDRESS, SAMPLE_PUBLISHER_PHONE);
 	}
@@ -84,16 +75,6 @@ public class SalemPublisherDaoTest {
 	public void tearThis() throws SQLException {
 		// FIXME?: WARNING maybe something that doesn't call the method we are trying to test
 		publisherDaoImpl.delete(testPublisher);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + PRIMARY_KEY + ") AS size FROM " + TABLE + ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -104,12 +85,12 @@ public class SalemPublisherDaoTest {
 	public void createPublisherTest() throws SQLException {
 		publisherDaoImpl.delete(testPublisher);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = publisherDaoImpl.findAll().size();
 
 		testPublisher = publisherDaoImpl.create(SAMPLE_PUBLISHER_NAME,
 				SAMPLE_PUBLISHER_ADDRESS, SAMPLE_PUBLISHER_PHONE);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = publisherDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize,
 				"creating a publisher increases record count");
@@ -127,15 +108,16 @@ public class SalemPublisherDaoTest {
 	 */
 	@Test
 	public void deletePublisherTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = publisherDaoImpl.findAll().size();
 
+		final int id = testPublisher.getId();
 		publisherDaoImpl.delete(testPublisher);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = publisherDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize,
 				"Deleting a publisher removes the record");
-		assertNull(publisherDaoImpl.get(testPublisher.getId()),
+		assertFalse(publisherDaoImpl.findById(id).isPresent(),
 				"Deleted publisher is gone from the database");
 	}
 
@@ -149,9 +131,10 @@ public class SalemPublisherDaoTest {
 		final Publisher newPublisher = new Publisher(testPublisher.getId(),
 				"Publisher Person", "123 new address in VA", "9876543210");
 
-		publisherDaoImpl.update(newPublisher);
+		publisherDaoImpl.save(newPublisher);
 
-		final Publisher updatedPublisher = publisherDaoImpl.get(newPublisher.getId());
+		final Publisher updatedPublisher = publisherDaoImpl
+				.findById(newPublisher.getId()).get();
 
 		assertNotNull(updatedPublisher, "updated publisher is still present");
 		assertEquals(newPublisher, updatedPublisher,
@@ -165,7 +148,8 @@ public class SalemPublisherDaoTest {
 	@DisplayName("Get correctly")
 	@Test
 	public void testGetPublisher() throws SQLException {
-		final Publisher foundPublisher = publisherDaoImpl.get(testPublisher.getId());
+		final Publisher foundPublisher = publisherDaoImpl
+				.findById(testPublisher.getId()).get();
 		assertNotNull(foundPublisher, "record successfully retrieved");
 		assertEquals(foundPublisher, testPublisher, "record has expected data");
 	}
@@ -177,19 +161,7 @@ public class SalemPublisherDaoTest {
 	@DisplayName("Return null if entry not found")
 	@Test
 	public void testGetNotFoundPublisher() throws SQLException {
-		assertNull(publisherDaoImpl.get(Integer.MAX_VALUE),
+		assertFalse(publisherDaoImpl.findById(Integer.MAX_VALUE).isPresent(),
 				"null returned for unknown ID");
-	}
-
-	/**
-	 * Test that getting all records works.
-	 * @throws SQLException on database error
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Publisher> listOfPublishers = publisherDaoImpl.getAll();
-		final int publisherSize = mySQLSize();
-		assertEquals(listOfPublishers.size(), publisherSize,
-				"DAO and SQL agree on number of publishers");
 	}
 }

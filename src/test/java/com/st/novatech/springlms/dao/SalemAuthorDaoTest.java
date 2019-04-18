@@ -1,21 +1,23 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Author;
 
@@ -24,20 +26,18 @@ import com.st.novatech.springlms.model.Author;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemAuthorDaoTest {
 	/**
 	 * Sample author name for tests.
 	 */
 	private static final String SAMPLE_AUTHOR_NAME = "Robert Jr.";
-
-	/**
-	 * The connection to the database.
-	 */
-	private Connection conn;
-
 	/**
 	 * The DAO under test.
 	 */
+	@Autowired
 	private AuthorDao authorDaoImpl;
 	/**
 	 * Stored author from tests.
@@ -45,14 +45,6 @@ public class SalemAuthorDaoTest {
 	 * <p>(TODO: Is this ever read without being first written to in the same test?)
 	 */
 	private Author testAuthor;
-	/**
-	 * The table this DAO accesses.
-	 */
-	private static final String TABLE = "tbl_author";
-	/**
-	 * The primary key in the table this DAO accesses.
-	 */
-	private static final String KEY_FIELD = "authorId";
 
 	/**
 	 * Set up the DB connection, the DAO, and test data before running each test.
@@ -62,8 +54,6 @@ public class SalemAuthorDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		authorDaoImpl = new AuthorDaoImpl(conn);
 		testAuthor = authorDaoImpl.create(SAMPLE_AUTHOR_NAME);
 	}
 
@@ -75,17 +65,6 @@ public class SalemAuthorDaoTest {
 	public void tearThis() throws SQLException {
 		// FIXME?: WARNING maybe something that doesn't call the method we are trying to test
 		authorDaoImpl.delete(testAuthor);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + KEY_FIELD + ") AS size FROM " + TABLE
-				+ ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -96,11 +75,11 @@ public class SalemAuthorDaoTest {
 	public void createTest() throws SQLException {
 		authorDaoImpl.delete(testAuthor);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = authorDaoImpl.findAll().size();
 
 		testAuthor = authorDaoImpl.create(SAMPLE_AUTHOR_NAME);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = authorDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize, "Creation adds a row");
 		assertEquals(SAMPLE_AUTHOR_NAME, testAuthor.getName(), "new author has expected name");
@@ -112,14 +91,16 @@ public class SalemAuthorDaoTest {
 	 */
 	@Test
 	public void deleteTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = authorDaoImpl.findAll().size();
+
+		final int id = testAuthor.getId();
 
 		authorDaoImpl.delete(testAuthor);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = authorDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize, "Deletion removes a row");
-		assertNull(authorDaoImpl.get(testAuthor.getId()), "row is gone after deletion");
+		assertFalse(authorDaoImpl.findById(id).isPresent(), "row is gone after deletion");
 	}
 
 	/**
@@ -130,9 +111,9 @@ public class SalemAuthorDaoTest {
 	public void updateTest() throws SQLException {
 		final Author newAuthor = new Author(testAuthor.getId(), "Author Person");
 
-		authorDaoImpl.update(newAuthor);
+		authorDaoImpl.save(newAuthor);
 
-		final Author updatedAuthor = authorDaoImpl.get(newAuthor.getId());
+		final Author updatedAuthor = authorDaoImpl.findById(newAuthor.getId()).get();
 
 		assertNotNull(updatedAuthor, "row is still present after update");
 		assertEquals(newAuthor, updatedAuthor, "update was propagated to row");
@@ -145,7 +126,7 @@ public class SalemAuthorDaoTest {
 	@DisplayName("Get correctly")
 	@Test
 	public void testGet() throws SQLException {
-		final Author foundAuthor = authorDaoImpl.get(testAuthor.getId());
+		final Author foundAuthor = authorDaoImpl.findById(testAuthor.getId()).get();
 		assertNotNull(foundAuthor, "retrieved row was not null");
 		assertEquals(testAuthor, foundAuthor, "retrieved row has expected data");
 	}
@@ -157,18 +138,7 @@ public class SalemAuthorDaoTest {
 	@DisplayName("Return null if entry not found")
 	@Test
 	public void testGetNotFound() throws SQLException {
-		final Author foundAuthor = authorDaoImpl.get(Integer.MAX_VALUE);
-		assertNull(foundAuthor, "author for unused ID was null");
-	}
-
-	/**
-	 * Test that retrieving all authors works.
-	 * @throws SQLException on DB error.
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Author> listOfAuthors = authorDaoImpl.getAll();
-		final int authorSize = mySQLSize();
-		assertEquals(listOfAuthors.size(), authorSize, "DAO and SQL report same size");
+		assertFalse(authorDaoImpl.findById(Integer.MAX_VALUE).isPresent(),
+				"author for unused ID was null");
 	}
 }

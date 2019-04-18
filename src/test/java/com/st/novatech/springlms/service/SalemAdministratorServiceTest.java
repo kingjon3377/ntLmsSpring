@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,8 +15,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.st.novatech.springlms.dao.InMemoryDBFactory;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
@@ -29,6 +31,8 @@ import com.st.novatech.springlms.model.Loan;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 public class SalemAdministratorServiceTest {
 
 	/**
@@ -94,21 +98,19 @@ public class SalemAdministratorServiceTest {
 	private Branch testBranch;
 
 	/**
-	 * The connection to the database.
-	 */
-	private Connection db;
-
-	/**
 	 * Administrator service object under test.
 	 */
+	@Autowired
 	private AdministratorService adminService;
 	/**
 	 * Borrower service object involved in tests.
 	 */
+	@Autowired
 	private BorrowerService borrowerService;
 	/**
 	 * Librarian service object involved in tests.
 	 */
+	@Autowired
 	private LibrarianService libraryService;
 
 	/**
@@ -120,10 +122,6 @@ public class SalemAdministratorServiceTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, TransactionException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		adminService = new AdministratorServiceImpl(db);
-		borrowerService = new BorrowerServiceImpl(db);
-		libraryService = new LibrarianServiceImpl(db);
 		testBorrower = adminService.createBorrower(SAMPLE_PATRON_NAME, SAMPLE_PATRON_ADDRESS,
 				SAMPLE_PATRON_PHONE);
 		testBook = adminService.createBook(SAMPLE_TITLE, null, null);
@@ -146,7 +144,6 @@ public class SalemAdministratorServiceTest {
 		adminService.deleteBorrower(testBorrower);
 		adminService.deleteBook(testBook);
 		adminService.deleteBranch(testBranch);
-		db.close();
 	}
 
 	/**

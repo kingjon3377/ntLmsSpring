@@ -1,21 +1,24 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
@@ -26,6 +29,9 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemBookDaoTest {
 	/**
 	 * Title of a sample book for the tests.
@@ -51,21 +57,19 @@ public class SalemBookDaoTest {
 	private static final String SAMPLE_AUTHOR_NAME = "Author Name";
 
 	/**
-	 * Connection to the database.
-	 */
-	private Connection conn;
-
-	/**
 	 * Book DAO under test.
 	 */
+	@Autowired
 	private BookDao bookDaoImpl;
 	/**
 	 * Publisher DAO involved in tests.
 	 */
+	@Autowired
 	private PublisherDao publisherDaoImpl;
 	/**
 	 * Author DAO involved in tests.
 	 */
+	@Autowired
 	private AuthorDao authorDaoImpl;
 	/**
 	 * Stored book from tests.
@@ -85,14 +89,6 @@ public class SalemBookDaoTest {
 	 * <p>(TODO: Is this ever read without being first written to in the same test?)
 	 */
 	private Publisher testPublisher;
-	/**
-	 * The table this DAO accesses.
-	 */
-	private static final String TABLE = "tbl_book";
-	/**
-	 * The primary key in the table this DAO accesses.
-	 */
-	private static final String KEY_FIELD = "bookId";
 
 	/**
 	 * Set up the database connection, the DAOs, and the test data before each test.
@@ -102,10 +98,6 @@ public class SalemBookDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		bookDaoImpl = new BookDaoImpl(conn);
-		publisherDaoImpl = new PublisherDaoImpl(conn);
-		authorDaoImpl = new AuthorDaoImpl(conn);
 		testAuthor = authorDaoImpl.create(SAMPLE_AUTHOR_NAME);
 		testPublisher = publisherDaoImpl.create(SAMPLE_PUBLISHER_NAME, SAMPLE_PUBLISHER_ADDRESS, SAMPLE_PUBLISHER_PHONE);
 		testBook = bookDaoImpl.create(SAMPLE_TITLE, testAuthor, testPublisher);
@@ -120,16 +112,6 @@ public class SalemBookDaoTest {
 		authorDaoImpl.delete(testAuthor);
 		publisherDaoImpl.delete(testPublisher);
 		bookDaoImpl.delete(testBook);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + KEY_FIELD + ") AS size FROM " + TABLE + ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -140,11 +122,11 @@ public class SalemBookDaoTest {
 	public void createBookTest() throws SQLException {
 		bookDaoImpl.delete(testBook);
 
-		final int previousSize = mySQLSize();
+		final int previousSize = bookDaoImpl.findAll().size();
 
 		testBook = bookDaoImpl.create(SAMPLE_TITLE, testAuthor, testPublisher);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = bookDaoImpl.findAll().size();
 
 		assertTrue(previousSize < currentSize, "creating book adds a row");
 		assertEquals(SAMPLE_TITLE, testBook.getTitle(), "created book has expected title");
@@ -158,14 +140,15 @@ public class SalemBookDaoTest {
 	 */
 	@Test
 	public void deleteBookTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = bookDaoImpl.findAll().size();
 
 		bookDaoImpl.delete(testBook);
 
-		final int currentSize = mySQLSize();
+		final int currentSize = bookDaoImpl.findAll().size();
 
 		assertTrue(previousSize > currentSize, "deletion removes a row");
-		assertNull(bookDaoImpl.get(testBook.getId()), "deleted row is gone from database");
+		assertFalse(bookDaoImpl.findById(testBook.getId()).isPresent(),
+				"deleted row is gone from database");
 	}
 
 	/**
@@ -186,9 +169,9 @@ public class SalemBookDaoTest {
 				newPublisherAddress, newPublisherPhone);
 		final Book newBook = new Book(testBook.getId(), newTitle, newAuthor, newPublisher);
 
-		bookDaoImpl.update(newBook);
+		bookDaoImpl.save(newBook);
 
-		final Book updatedbook = bookDaoImpl.get(newBook.getId());
+		final Book updatedbook = bookDaoImpl.findById(newBook.getId()).get();
 
 		assertNotNull(updatedbook, "row is present after update");
 		assertEquals(newBook, updatedbook, "update propagates data to table");
@@ -211,9 +194,9 @@ public class SalemBookDaoTest {
 
 		final Book newBook = new Book(testBook.getId(), newTitle, null, newPublisher);
 
-		bookDaoImpl.update(newBook);
+		bookDaoImpl.save(newBook);
 
-		final Book updatedBook = bookDaoImpl.get(newBook.getId());
+		final Book updatedBook = bookDaoImpl.findById(newBook.getId()).get();
 
 		assertNotNull(updatedBook, "row is present after update");
 		assertEquals(newBook, updatedBook, "update propagates data to table");
@@ -234,9 +217,9 @@ public class SalemBookDaoTest {
 
 		final Book newBook = new Book(testBook.getId(), newTitle, newAuthor, null);
 
-		bookDaoImpl.update(newBook);
+		bookDaoImpl.save(newBook);
 
-		final Book updatedBook = bookDaoImpl.get(newBook.getId());
+		final Book updatedBook = bookDaoImpl.findById(newBook.getId()).get();
 
 		assertNotNull(updatedBook, "row is present after update");
 		assertEquals(newBook, updatedBook, "update propagates data to table");
@@ -250,7 +233,7 @@ public class SalemBookDaoTest {
 	@DisplayName("Get correctly")
 	@Test
 	public void testGetBook() throws SQLException {
-		final Book foundBook = bookDaoImpl.get(testBook.getId());
+		final Book foundBook = bookDaoImpl.findById(testBook.getId()).get();
 		assertNotNull(foundBook, "retrieval finds book");
 		assertEquals(testBook, foundBook, "retrieval finds expected book");
 	}
@@ -262,19 +245,7 @@ public class SalemBookDaoTest {
 	@DisplayName("Return null if entry not found")
 	@Test
 	public void testGetNotFoundBook() throws SQLException {
-		final Book foundBook = bookDaoImpl.get(Integer.MAX_VALUE);
-		assertNull(foundBook, "retrieving book with absent ID returns null");
+		assertFalse(bookDaoImpl.findById(Integer.MAX_VALUE).isPresent(),
+				"retrieving book with absent ID returns null");
 	}
-
-	/**
-	 * Test that full-table retrieval works.
-	 * @throws SQLException on DB error
-	 */
-	@Test
-	public void testGetAll() throws SQLException {
-		final List<Book> listOfBooks = bookDaoImpl.getAll();
-		final int bookSize = mySQLSize();
-		assertEquals(listOfBooks.size(), bookSize, "DAO and SQL agree on number of rows");
-	}
-
 }

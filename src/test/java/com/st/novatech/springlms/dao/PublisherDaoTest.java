@@ -1,24 +1,22 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Publisher;
 
@@ -28,37 +26,20 @@ import com.st.novatech.springlms.model.Publisher;
  * @author Jonathan Lovelace
  *
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 class PublisherDaoTest {
 	/**
 	 * The DAO being tested.
 	 */
+	@Autowired
 	private PublisherDao testee;
 	/**
-	 * The connection to the database.
+	 * Book DAO used in tests.
 	 */
-	private Connection db;
-
-	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
-	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		testee = new PublisherDaoImpl(db);
-	}
-
-	/**
-	 * Tear down the database after each test.
-	 *
-	 * @throws SQLException on database error while closing the connection
-	 */
-	@AfterEach
-	public void tearDown() throws SQLException {
-		db.close();
-	}
+	@Autowired
+	private BookDao bookDao;
 
 	/**
 	 * Test that creating a publisher through the DAO works as expected.
@@ -84,12 +65,7 @@ class PublisherDaoTest {
 		assertEquals(3, third.getId(), "third publisher has expected ID");
 		assertEquals("another publisher", third.getName(),
 				"third publisher has expected name");
-		try (Statement statement = db.createStatement();
-				ResultSet rs = statement.executeQuery(
-						"SELECT COUNT(*) AS `count` FROM `tbl_publisher`")) {
-			rs.next();
-			assertEquals(3, rs.getInt(1), "table has expected number of rows");
-		}
+		assertEquals(3, testee.findAll().size(), "table has expected number of rows");
 	}
 
 	/**
@@ -100,18 +76,20 @@ class PublisherDaoTest {
 	public final void testUpdate() throws SQLException {
 		final Publisher expected = new Publisher(1, "changed value",
 				"changed address", "changed phone");
+		final Publisher original = new Publisher(1, "original name",
+				"original address", "address phone");
 		final Publisher created = testee.create("original name", "original address",
 				"address phone");
 		assertNotEquals(expected, created,
 				"Author is not originally equal to changed value");
-		assertEquals(created, testee.get(1),
+		assertEquals(original, testee.findById(1).get(),
 				"Original is retrievable from database");
-		assertNotEquals(expected, testee.get(1),
+		assertNotEquals(expected, testee.findById(1).get(),
 				"Changed value is not yet retrievable");
-		testee.update(expected);
-		assertEquals(expected, testee.get(1),
+		testee.save(expected);
+		assertEquals(expected, testee.findById(1).get(),
 				"After update(), changed value is retrievable");
-		assertNotEquals(created, testee.get(1),
+		assertNotEquals(original, testee.findById(1).get(),
 				"After update(), original is not retrievable");
 	}
 
@@ -126,24 +104,15 @@ class PublisherDaoTest {
 				new Publisher(2, "publisher one"), new Publisher(3, "publisher two"),
 				new Publisher(4, "publisher three"),
 				new Publisher(5, "publisher 4"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			statement.setString(1, toDelete.getName());
-			statement.setString(2, toDelete.getAddress());
-			statement.setString(3, toDelete.getPhone());
-			statement.executeUpdate();
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		testee.create(toDelete.getName(), toDelete.getAddress(), toDelete.getPhone());
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
-		assertEquals(5, testee.getAll().size(), "Has correct size before delete");
+		assertEquals(5, testee.findAll().size(), "Has correct size before delete");
 		testee.delete(toDelete);
-		assertEquals(new HashSet<>(expected), new HashSet<>(testee.getAll()),
+		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"Deleted publisher is gone");
-		assertNull(testee.get(1), "Deleted author is gone");
+		assertFalse(testee.findById(1).isPresent(), "Deleted author is gone");
 	}
 
 	/**
@@ -156,31 +125,15 @@ class PublisherDaoTest {
 	public void testDeleteCascade() throws SQLException {
 		final Publisher toDelete = testee.create("author to be deleted", "", "");
 		final Publisher toKeep = testee.create("author to keep", "", "");
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_book` (`title`, `authId`, `pubId`) VALUES(?, ?, ?)")) {
-			statement.setString(1, "title by keep");
-			statement.setNull(2, Types.INTEGER);
-			statement.setInt(3, toKeep.getId());
-			statement.executeUpdate();
-			statement.setString(1, "title by delete");
-			statement.setNull(2, Types.INTEGER);
-			statement.setInt(3, toDelete.getId());
-			statement.executeUpdate();
-		}
-		try (PreparedStatement statement = db
-				.prepareStatement("SELECT COUNT(*) AS `count` FROM `tbl_book`")) {
-			try (ResultSet rs = statement.executeQuery()) {
-				rs.next();
-				assertEquals(2, rs.getInt(1), "Two books before removing publisher");
-			}
-			testee.delete(toDelete);
-			try (ResultSet rs = statement.executeQuery()) {
-				rs.next();
-				assertEquals(1, rs.getInt(1),
-						"Removing publisher removes publisher's book");
-			}
-		}
-
+		bookDao.create("title by keep", null, toKeep);
+		bookDao.create("title by delete", null, toDelete);
+		assertEquals(2, bookDao.findAll().size(),
+				"Two books before removing publisher");
+		testee.delete(toDelete);
+		bookDao.flush();
+		testee.flush();
+		assertEquals(1, bookDao.findAll().size(),
+				"Removing publisher removes publisher's book");
 	}
 
 	/**
@@ -193,22 +146,16 @@ class PublisherDaoTest {
 				new Publisher(1, "one author", "one address", "one phone"),
 				new Publisher(2, "two author", "two address", "two phone"),
 				new Publisher(3, "three author", "three address", "three phone"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
-		assertEquals(expected.get(0), testee.get(1),
+		assertEquals(expected.get(0), testee.findById(1).get(),
 				"get() returns first author as expected");
-		assertEquals(expected.get(2), testee.get(3),
+		assertEquals(expected.get(2), testee.findById(3).get(),
 				"get() returns third author as expected");
-		assertEquals(expected.get(1), testee.get(2),
+		assertEquals(expected.get(1), testee.findById(2).get(),
 				"get() returns second author as expected");
-		assertNull(testee.get(5), "get() returns null on nonexistent author");
+		assertFalse(testee.findById(5).isPresent(), "get() returns null on nonexistent author");
 	}
 
 	/**
@@ -217,22 +164,16 @@ class PublisherDaoTest {
 	 */
 	@Test
 	public final void testGetAll() throws SQLException {
-		assertTrue(testee.getAll().isEmpty(),
+		assertTrue(testee.findAll().isEmpty(),
 				"Before adding any authors, getAll() returns empty list");
 		final List<Publisher> expected = Arrays.asList(
 				new Publisher(1, "one author", "one address", "one phone"),
 				new Publisher(2, "two author", "two address", "two phone"),
 				new Publisher(3, "three author", "three address", "three phone"));
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_publisher` (`publisherName`, `publisherAddress`, `publisherPhone`) VALUES(?, ?, ?)")) {
-			for (final Publisher publisher : expected) {
-				statement.setString(1, publisher.getName());
-				statement.setString(2, publisher.getAddress());
-				statement.setString(3, publisher.getPhone());
-				statement.executeUpdate();
-			}
+		for (final Publisher publisher : expected) {
+			testee.create(publisher.getName(), publisher.getAddress(), publisher.getPhone());
 		}
-		assertEquals(new HashSet<>(expected), new HashSet<>(testee.getAll()),
+		assertEquals(new HashSet<>(expected), new HashSet<>(testee.findAll()),
 				"getAll() returns expected authors");
 	}
 }

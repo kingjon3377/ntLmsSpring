@@ -4,9 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -15,6 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
@@ -24,21 +27,10 @@ import com.st.novatech.springlms.model.Branch;
  * @author Salem Ozaki
  * @author Jonathan Lovelace (integration and polishing)
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SalemCopiesDaoTest {
-	/**
-	 * Database connection.
-	 */
-	private static Connection conn = null;
-
-	/**
-	 * The table this DAO represents.
-	 */
-	private static final String TABLE = "tbl_book_copies";
-	/**
-	 * The primary key in the table.
-	 */
-	private static final String PRIMARY_KEY = "bookId";
-
 	/**
 	 * Sample book title for tests.
 	 */
@@ -61,14 +53,17 @@ public class SalemCopiesDaoTest {
 	/**
 	 * Book DAO involved in tests.
 	 */
+	@Autowired
 	private BookDao bookDaoImpl;
 	/**
 	 * Branch DAO involved in tests.
 	 */
+	@Autowired
 	private LibraryBranchDao branchDaoImpl;
 	/**
 	 * Copies DAO under test.
 	 */
+	@Autowired
 	private CopiesDao copiesDaoImpl;
 
 	/**
@@ -91,14 +86,9 @@ public class SalemCopiesDaoTest {
 	 */
 	@BeforeEach
 	public void init() throws SQLException, IOException {
-		conn = InMemoryDBFactory.getConnection("library");
-		bookDaoImpl = new BookDaoImpl(conn);
-		branchDaoImpl = new LibraryBranchDaoImpl(conn);
-		copiesDaoImpl = new CopiesDaoImpl(conn);
 		testBook = bookDaoImpl.create(SAMPLE_TITLE, null, null);
 		testBranch = branchDaoImpl.create(SAMPLE_BRANCH_NAME, SAMPLE_BRANCH_ADDRESS);
 		copiesDaoImpl.setCopies(testBranch, testBook, NUM_COPIES);
-		conn.commit();
 	}
 
 	/**
@@ -109,16 +99,6 @@ public class SalemCopiesDaoTest {
 	public void tearThis() throws SQLException {
 		bookDaoImpl.delete(testBook);
 		branchDaoImpl.delete(testBranch);
-		conn.close();
-	}
-
-	private int mySQLSize() throws SQLException {
-		final String sql = "SELECT COUNT(" + PRIMARY_KEY + ") AS size FROM " + TABLE + ";";
-		final PreparedStatement prepareStatement = conn.prepareStatement(sql);
-		try (ResultSet resultSet = prepareStatement.executeQuery()) {
-			resultSet.next();
-			return resultSet.getInt("size");
-		}
 	}
 
 	/**
@@ -152,9 +132,9 @@ public class SalemCopiesDaoTest {
 	@DisplayName("Deleting an entry if noOfCopies is 0")
 	@Test
 	public void setEntryWithNoOfCopiesTest() throws SQLException {
-		final int previousSize = mySQLSize();
+		final int previousSize = copiesDaoImpl.findAll().size();
 		copiesDaoImpl.setCopies(testBranch, testBook, 0);
-		assertEquals(previousSize - 1, mySQLSize(),
+		assertEquals(previousSize - 1, copiesDaoImpl.findAll().size(),
 				"setting number of copies to 0 deletes row");
 	}
 
@@ -167,10 +147,9 @@ public class SalemCopiesDaoTest {
 	@Test
 	public void setEntryWithNewNoOfCopies() throws SQLException {
 		final int newNoOfCopies = 100;
-		final int previousSize = mySQLSize();
+		final int previousSize = copiesDaoImpl.findAll().size();
 		copiesDaoImpl.setCopies(testBranch, testBook, newNoOfCopies);
-		conn.commit();
-		final int currentSize = mySQLSize();
+		final int currentSize = copiesDaoImpl.findAll().size();
 		final int foundNoOfCopies = copiesDaoImpl.getCopies(testBranch, testBook);
 
 		assertEquals(previousSize, currentSize,

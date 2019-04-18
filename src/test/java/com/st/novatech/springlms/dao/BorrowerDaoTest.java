@@ -1,21 +1,19 @@
 package com.st.novatech.springlms.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
@@ -26,38 +24,30 @@ import com.st.novatech.springlms.model.Branch;
  * @author Jonathan Lovelace
  *
  */
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@DirtiesContext(classMode = ClassMode.BEFORE_EACH_TEST_METHOD)
 class BorrowerDaoTest {
 	/**
 	 * The DAO being tested.
 	 */
+	@Autowired
 	private BorrowerDao testee;
 	/**
-	 * The connection to the database.
+	 * Branch DAO used in tests.
 	 */
-	private Connection db;
-
+	@Autowired
+	private LibraryBranchDao branchDao;
 	/**
-	 * Set up the DB connection and the DAO before each test.
-	 *
-	 * @throws SQLException on database errors
-	 * @throws IOException  on I/O error reading the database schema from file
+	 * Book DAO used in tests.
 	 */
-	@BeforeEach
-	public void setUp() throws SQLException, IOException {
-		db = InMemoryDBFactory.getConnection("library");
-		testee = new BorrowerDaoImpl(db);
-	}
-
+	@Autowired
+	private BookDao bookDao;
 	/**
-	 * Tear down the database after each test.
-	 *
-	 * @throws SQLException on database error while closing the connection
+	 * Loans DAO used in tests.
 	 */
-	@AfterEach
-	public void tearDown() throws SQLException {
-		db.close();
-	}
-
+	@Autowired
+	private BookLoansDao loansDao;
 	/**
 	 * Test creation.
 	 * @throws SQLException if something goes wrong.
@@ -72,12 +62,7 @@ class BorrowerDaoTest {
 		final Borrower second = new Borrower(2, "second name", "", "");
 		assertEquals(second, testee.create("second name", "", ""),
 				"Empty strings work");
-		try (Statement statement = db.createStatement();
-				ResultSet rs = statement.executeQuery(
-						"SELECT COUNT(*) AS `count` FROM `tbl_borrower`")) {
-			rs.next();
-			assertEquals(2, rs.getInt(1), "Table has expected number of rows");
-		}
+		assertEquals(2, testee.findAll().size(), "Table has expected number of rows");
 	}
 
 	/**
@@ -98,16 +83,16 @@ class BorrowerDaoTest {
 				"after phone");
 		final Borrower borrower = testee.create("before name", "before address",
 				beforePhone);
-		assertEquals(before, testee.get(1), "initial state as expected");
+		assertEquals(before, testee.findById(1).get(), "initial state as expected");
 		borrower.setName(middleName);
-		testee.update(borrower);
-		assertEquals(middle, testee.get(1), "update propagated to database");
+		testee.save(borrower);
+		assertEquals(middle, testee.findById(1).get(), "update propagated to database");
 		borrower.setAddress("later address");
-		testee.update(borrower);
-		assertEquals(later, testee.get(1), "second update propagated to database");
+		testee.save(borrower);
+		assertEquals(later, testee.findById(1).get(), "second update propagated to database");
 		borrower.setPhone("after phone");
-		testee.update(borrower);
-		assertEquals(after, testee.get(1), "third update propagated to database");
+		testee.save(borrower);
+		assertEquals(after, testee.findById(1).get(), "third update propagated to database");
 	}
 
 	/**
@@ -116,21 +101,16 @@ class BorrowerDaoTest {
 	 */
 	@Test
 	public final void testDelete() throws SQLException {
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_borrower` (`name`, `address`, `phone`) VALUES (?, NULL, NULL)")) {
-			for (final String name : Arrays.asList("first borrower",
-					"second borrower", "third borrower")) {
-				statement.setString(1, name);
-				statement.executeUpdate();
-			}
-		}
-		assertEquals(3, testee.getAll().size());
+		testee.create("first borrower", "", "");
+		testee.create("second borrower", "", "");
+		testee.create("third borrower", "", "");
+		assertEquals(3, testee.findAll().size());
 		testee.delete(new Borrower(2, "second borrower", "", ""));
 		assertEquals(
 				new HashSet<>(
 						Arrays.asList(new Borrower(1, "first borrower", "", ""),
 								new Borrower(3, "third borrower", "", ""))),
-				new HashSet<>(testee.getAll()),
+				new HashSet<>(testee.findAll()),
 				"Remaining values are as expected after deletion");
 	}
 
@@ -140,28 +120,16 @@ class BorrowerDaoTest {
 	 */
 	@Test
 	public final void testGet() throws SQLException {
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_borrower` (`name`, `address`, `phone`) VALUES (?, ?, ?)")) {
-			statement.setString(1, "patron one");
-			statement.setString(2, "first address");
-			statement.setString(3, "first phone");
-			statement.executeUpdate();
-			statement.setString(1, "patron two");
-			statement.setString(2, "second address");
-			statement.setString(3, "second phone");
-			statement.executeUpdate();
-			statement.setString(1, "patron three");
-			statement.setNull(2, Types.VARCHAR);
-			statement.setNull(3, Types.VARCHAR);
-			statement.executeUpdate();
-		}
+		testee.create("patron one", "first address", "first phone");
+		testee.create("patron two", "second address", "second phone");
+		testee.create("patron three", "", "");
 		assertEquals(new Borrower(1, "patron one", "first address", "first phone"),
-				testee.get(1), "get() returns expected borrower");
-		assertEquals(new Borrower(3, "patron three", "", ""), testee.get(3),
+				testee.findById(1).get(), "get() returns expected borrower");
+		assertEquals(new Borrower(3, "patron three", "", ""), testee.findById(3).get(),
 				"get() translates nulls to empty strings");
 		assertEquals(new Borrower(2, "patron two", "second address", "second phone"),
-				testee.get(2), "get() returns expected borrower");
-		assertNull(testee.get(5), "get() returns null if no such row");
+				testee.findById(2).get(), "get() returns expected borrower");
+		assertFalse(testee.findById(5).isPresent(), "get() returns null if no such row");
 	}
 
 	/**
@@ -170,27 +138,15 @@ class BorrowerDaoTest {
 	 */
 	@Test
 	public final void testGetAll() throws SQLException {
-		try (PreparedStatement statement = db.prepareStatement(
-				"INSERT INTO `tbl_borrower` (`name`, `address`, `phone`) VALUES (?, ?, ?)")) {
-			statement.setString(1, "borrower one");
-			statement.setString(2, "address one");
-			statement.setString(3, "phone one");
-			statement.executeUpdate();
-			statement.setString(1, "borrower two");
-			statement.setString(2, "address two");
-			statement.setString(3, "phone two");
-			statement.executeUpdate();
-			statement.setString(1, "borrower three");
-			statement.setNull(2, Types.VARCHAR);
-			statement.setNull(3, Types.VARCHAR);
-			statement.executeUpdate();
-		}
+		testee.create("borrower one", "address one", "phone one");
+		testee.create("borrower two", "address two", "phone two");
+		testee.create("borrower three", "", "");
 		assertEquals(
 				new HashSet<>(Arrays.asList(
 						new Borrower(1, "borrower one", "address one", "phone one"),
 						new Borrower(2, "borrower two", "address two", "phone two"),
 						new Borrower(3, "borrower three", "", ""))),
-				new HashSet<>(testee.getAll()), "getAll() returns expected rows");
+				new HashSet<>(testee.findAll()), "getAll() returns expected rows");
 	}
 
 	/**
@@ -203,17 +159,16 @@ class BorrowerDaoTest {
 	public final void testDeleteLoansCascade() throws SQLException {
 		final Borrower toRemove = testee.create("borrower to remove", "", "");
 		final Borrower toKeep = testee.create("borrower to keep", "", "");
-		final BookLoansDao loansDao = new BookLoansDaoImpl(db);
-		final LibraryBranchDao branchDao = new LibraryBranchDaoImpl(db);
 		final Branch branch = branchDao.create("branch name", "");
-		final BookDao bookDao = new BookDaoImpl(db);
 		final Book book = bookDao.create("book title", null, null);
 		loansDao.create(book, toRemove, branch, null, null);
 		loansDao.create(book, toKeep, branch, null, null);
-		assertEquals(2, loansDao.getAll().size(),
+		assertEquals(2, loansDao.findAll().size(),
 				"Two outstanding loans before deletion");
 		testee.delete(toRemove);
-		assertEquals(1, loansDao.getAll().size(),
+		loansDao.flush();
+		testee.flush();
+		assertEquals(1, loansDao.findAll().size(),
 				"Loan of book to deleted borrower was also removed");
 	}
 }
