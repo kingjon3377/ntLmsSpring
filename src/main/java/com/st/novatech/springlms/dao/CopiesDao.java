@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
@@ -21,6 +22,7 @@ import com.st.novatech.springlms.model.CopiesIdentity;
  * @author Salem Ozaki
  * @author Jonathan Lovelace
  */
+@Repository
 public interface CopiesDao extends JpaRepository<BranchCopies, CopiesIdentity> {
 	/**
 	 * Get the number of copies of a book held by a particular branch.
