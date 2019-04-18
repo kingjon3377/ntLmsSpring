@@ -42,6 +42,15 @@ public class Branch implements Serializable {
 	@Column(name = "branchAddress")
 	private String address;
 
+	// Uncommenting this field causes branch deletions to not be cascaded properly.
+//	/**
+//	 * list of loans from this branch
+//	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+//	@OneToMany(fetch = FetchType.LAZY, mappedBy = "id.branch")
+//	private List<Loan> loans;
+
 	/**
 	 * No-arg constructor required for JPA.
 	 */
@@ -62,6 +71,16 @@ public class Branch implements Serializable {
 		this.name = name;
 		this.address = address;
 	}
+
+//	/**
+//	 * Get a list of loans from this branch.
+//	 *
+//	 * <p>TODO: return a copy instead
+//	 * @return	get list of loans from this branch
+//	 */
+//	public List<Loan> getLoans() {
+//		return loans;
+//	}
 
 	/**
 	 * Get the name of the branch, which will not be null.

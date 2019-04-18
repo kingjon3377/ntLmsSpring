@@ -46,6 +46,23 @@ public class Borrower implements Serializable {
 	@Column
 	private String phone;
 
+	// Uncommenting this field causes borrower deletions to not be cascaded properly.
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+//	@OneToMany(fetch = FetchType.LAZY, mappedBy = "id.borrower")
+//	private List<Loan> loans;
+
+//	/**
+//	 * Get a list of loans to this borrower.
+//	 *
+//	 * <p>TODO: return a copy instead
+//	 *
+//	 * @return	get list of loans belonging to this borrower
+//	 */
+//	public List<Loan> getLoans() {
+//		return loans;
+//	}
+
 	/**
 	 * No-arg constructor required for JPA.
 	 */
