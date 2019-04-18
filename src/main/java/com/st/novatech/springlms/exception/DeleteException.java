@@ -1,5 +1,8 @@
 package com.st.novatech.springlms.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 /**
  * An exception class to report the failure of a 'delete' operation from the
  * service layer to the application layer.
@@ -8,6 +11,7 @@ package com.st.novatech.springlms.exception;
  * @author Jonathan Lovelace
  */
 @SuppressWarnings("serial")
+@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR, reason = "Could not delete the requested item")
 public class DeleteException extends TransactionException {
 	/**
 	 * To throw an instance of this exception class, the caller must supply the

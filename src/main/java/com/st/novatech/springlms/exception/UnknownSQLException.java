@@ -1,5 +1,8 @@
 package com.st.novatech.springlms.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 /**
  * An exception class to report the failure of an operation of a type other than
  * deletion, insertion, and update from the service layer to the application
@@ -9,6 +12,7 @@ package com.st.novatech.springlms.exception;
  * @author Jonathan Lovelace
  */
 @SuppressWarnings("serial")
+@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR, reason = "Something went wrong with our server")
 public class UnknownSQLException extends TransactionException {
 	/**
 	 * To throw an instance of this exception class, the caller must supply the
