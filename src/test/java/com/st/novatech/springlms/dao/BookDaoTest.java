@@ -153,17 +153,14 @@ public final class BookDaoTest {
 		final Book toRemove = testee.create("book to remove", null, null);
 		final Book toKeep = testee.create("book to keep", null, null);
 		final Branch branch = branchDao.create("branch name", "");
-		branchDao.flush();
 		final Borrower borrower = borrowerDao.create("borrower", "", "");
-		borrowerDao.flush();
 		loansDao.create(toKeep, borrower, branch, null, null);
 		loansDao.create(toRemove, borrower, branch, null, null);
-		loansDao.flush();
 		assertEquals(2, loansDao.findAll().size(),
 				"Two outstanding loans before deletion");
 		testee.delete(toRemove);
-		loansDao.flush();
 		testee.flush();
+		loansDao.flush();
 		assertEquals(1, loansDao.findAll().size(),
 				"Loan of deleted book was also removed");
 	}

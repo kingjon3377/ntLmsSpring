@@ -125,7 +125,6 @@ public class SalemLibrarianServiceTest {
 
 		final int customNoOfCopies = 99;
 		libService.setBranchCopies(testBranch, testBook, customNoOfCopies);
-		libService.commit();
 		final List<BranchCopies> currentListOfCopies = libService.getAllCopies();
 		assertTrue(
 				currentListOfCopies.stream().map(BranchCopies::getBranch)

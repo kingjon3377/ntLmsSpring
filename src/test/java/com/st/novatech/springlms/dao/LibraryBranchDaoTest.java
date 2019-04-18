@@ -152,7 +152,6 @@ class LibraryBranchDaoTest {
 		assertEquals(2, loansDao.findAll().size(), "Two loans before branch removal");
 		testee.delete(toRemove);
 		loansDao.flush();
-		testee.flush();
 		assertEquals(1, loansDao.findAll().size(), "One loan after branch removal");
 	}
 
