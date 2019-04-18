@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -23,6 +23,7 @@ import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Publisher;
 
 /**
@@ -116,19 +117,22 @@ public class SalemLibrarianServiceTest {
 	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void setBranchCopiesNonExistingTest() throws TransactionException {
-		final Map<Branch, Map<Book, Integer>> previousListOfCopies = libService.getAllCopies();
-		assertTrue(previousListOfCopies.containsKey(testBranch),
+		final List<BranchCopies> previousListOfCopies = libService.getAllCopies();
+		assertTrue(
+				previousListOfCopies.stream().map(BranchCopies::getBranch)
+						.anyMatch(testBranch::equals),
 				"already have records for the test branch");
 
 		final int customNoOfCopies = 99;
 		libService.setBranchCopies(testBranch, testBook, customNoOfCopies);
 		libService.commit();
-		final Map<Branch, Map<Book, Integer>> currentListOfCopies = libService.getAllCopies();
-		assertTrue(currentListOfCopies.containsKey(testBranch),
+		final List<BranchCopies> currentListOfCopies = libService.getAllCopies();
+		assertTrue(
+				currentListOfCopies.stream().map(BranchCopies::getBranch)
+						.anyMatch(testBranch::equals),
 				"still have records for the test branch");
 
-		assertEquals(customNoOfCopies,
-				currentListOfCopies.get(testBranch).get(testBook).intValue(),
+		assertEquals(customNoOfCopies, libService.getCopies(testBook, testBranch),
 				"new copy count propagated to the database");
 	}
 

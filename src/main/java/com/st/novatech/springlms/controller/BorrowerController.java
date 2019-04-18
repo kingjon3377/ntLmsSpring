@@ -3,7 +3,6 @@ package com.st.novatech.springlms.controller;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 import com.st.novatech.springlms.service.BorrowerService;
 
@@ -101,8 +101,9 @@ public class BorrowerController {
 			if(foundBranch == null) {
 				throw new RetrieveException("Requested branch not found");
 			}
-			Map<Book, Integer> listOfAllBranchCopies = borrowerService.getAllBranchCopies(foundBranch);
-			return new ResponseEntity<Map<Book, Integer>>(listOfAllBranchCopies, HttpStatus.OK);
+			final List<BranchCopies> listOfAllBranchCopies = borrowerService
+					.getAllBranchCopies(foundBranch);
+			return new ResponseEntity<List<BranchCopies>>(listOfAllBranchCopies, HttpStatus.OK);
 		} catch (TransactionException exception) {
 			if(exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

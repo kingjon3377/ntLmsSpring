@@ -21,6 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 /**
  * Test of library-branch DAO.
  * @author Jonathan Lovelace
@@ -125,15 +126,14 @@ class LibraryBranchDaoTest {
 		copiesDao.setCopies(toKeep, book, 2);
 		copiesDao.setCopies(toRemove, book, 3);
 		assertEquals(5,
-				copiesDao.getAllBookCopies(book).values().stream()
-						.mapToInt(Integer::intValue).sum(),
+				copiesDao.getAllBookCopies(book).stream()
+						.mapToInt(BranchCopies::getCopies).sum(),
 				"Expected number of copies before branch removal");
 		testee.delete(toRemove);
 		copiesDao.flush();
-		testee.flush();
 		assertEquals(2,
-				copiesDao.getAllBookCopies(book).values().stream()
-						.mapToInt(Integer::intValue).sum(),
+				copiesDao.getAllBookCopies(book).stream()
+						.mapToInt(BranchCopies::getCopies).sum(),
 				"Expected number of copies after branch removal");
 	}
 

@@ -1,7 +1,6 @@
 package com.st.novatech.springlms.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +19,7 @@ import com.st.novatech.springlms.exception.UnknownSQLException;
 import com.st.novatech.springlms.exception.UpdateException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 
 /**
  * The "service" class to help UIs for librarians.
@@ -110,7 +110,7 @@ public final class LibrarianServiceImpl implements LibrarianService {
 	}
 
 	@Override
-	public Map<Branch, Map<Book, Integer>> getAllCopies() throws TransactionException {
+	public List<BranchCopies> getAllCopies() throws TransactionException {
 		try {
 			return copiesDao.getAllCopies();
 		} catch (final DataAccessException except) {

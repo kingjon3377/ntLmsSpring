@@ -6,7 +6,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,6 +30,7 @@ import com.st.novatech.springlms.exception.UnknownSQLException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 
 import org.springframework.stereotype.Service;
@@ -150,7 +150,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Map<Book, Integer> getAllBranchCopies(final Branch branch)
+	public List<BranchCopies> getAllBranchCopies(final Branch branch)
 			throws TransactionException {
 		try {
 			return copiesDao.getAllBranchCopies(branch);

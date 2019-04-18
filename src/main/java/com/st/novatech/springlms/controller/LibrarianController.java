@@ -1,7 +1,6 @@
 package com.st.novatech.springlms.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -102,7 +101,7 @@ public final class LibrarianController {
 	}
 
 	@RequestMapping({ "/branches/books/copies", "/branches/books/copies/" })
-	public Map<Branch, Map<Book, Integer>> getAllCopies()
+	public List<BranchCopies> getAllCopies()
 			throws TransactionException {
 		return service.getAllCopies();
 	}
