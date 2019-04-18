@@ -280,4 +280,49 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			throw rollback(new RetrieveException("Getting a Loan failed", except));
 		}
 	}
+
+	/**
+	 * Set the number of copies of a book held by a particular branch. If the number
+	 * is set to 0, the row is deleted from the database.
+	 *
+	 * @param branch     the branch in question
+	 * @param book       the book in question
+	 * @param noOfCopies the number of copies held by that branch; MUST not be
+	 *                   negative.
+	 * @throws TransationException on unexpected error in dealing with the database. WARNING (NEED to prevent user from passing negative numbers)
+	 */
+	protected void setCopies(final Branch branch, final Book book, final int noOfCopies) throws TransactionException {
+		try {
+			if (noOfCopies < 0) {
+				throw new IllegalArgumentException(
+						"Number of copies must be nonnegative");
+			} else if (book == null || branch == null) {
+				// TODO: throw IllegalArgumentException?
+			} else {
+				copiesDao.save(new BranchCopies(book, branch, noOfCopies));
+			}
+		} catch (final DataAccessException e) {
+			throw new UnknownSQLException("Error with setting copies", e);
+		}
+	}
+
+	/**
+	 * Get the copies entity for a given branch and book
+	 *
+	 * @param branch	branch in question
+	 * @param book		book in question
+	 * @return			number of copies for a given branch and book
+	 * @throws TransactionException
+	 */
+	protected int getCopies(final Branch branch, final Book book) throws TransactionException {
+		try {
+			if (branch == null || book == null) {
+				return 0; // TODO: Throw IllegalArgumentException instead?
+			} else {
+				return copiesDao.getCopies(branch, book);
+			}
+		} catch (final DataAccessException e) {
+			throw new RetrieveException("Error with getting copies");
+		}
+	}
 }
