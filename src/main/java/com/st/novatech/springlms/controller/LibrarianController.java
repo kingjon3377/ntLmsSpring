@@ -79,7 +79,7 @@ public final class LibrarianController {
 
 	@RequestMapping(path = { "/branch/{branchId}/book/{bookId}",
 			"/branch/{branchId}/book/{bookId}/" }, method = RequestMethod.PUT)
-	public BranchCopies setBranchCopies(@PathVariable("branchId") final int branchId,
+	public BranchCopies updateBranchCopies(@PathVariable("branchId") final int branchId,
 			@PathVariable("bookId") final int bookId,
 			@RequestParam("noOfCopies") final int copies)
 			throws TransactionException {
