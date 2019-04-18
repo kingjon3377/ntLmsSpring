@@ -17,8 +17,10 @@ import org.junit.jupiter.api.Test;
 
 import com.st.novatech.springlms.dao.InMemoryDBFactory;
 import com.st.novatech.springlms.exception.TransactionException;
+import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.Publisher;
 
 /**
  * Tests of the librarian service class.
@@ -142,5 +144,32 @@ public class SalemLibrarianServiceTest {
 		assertEquals(customNoOfCopies,
 				currentListOfCopies.get(testBranch).get(testBook).intValue(),
 				"new copy count propagated to the database");
+	}
+
+	/**
+	 * Test that getting a book works.
+	 * @throws SQLException on database error
+	 * @throws TransactionException on error caught by the service
+	 */
+	@Test
+	public void testGetBook() throws SQLException, TransactionException {
+		final Author foundAuthor = adminService.getAuthor(1);
+		final Publisher foundPublisher = adminService.getPublisher(1);
+		final Book foundBook = adminService.createBook("50 down", foundAuthor, foundPublisher);
+
+		assertEquals(foundBook.getTitle(), adminService.getBook(foundBook.getId()).getTitle(),
+				"retrieved book has expected title");
+	}
+
+	/**
+	 * Test that getting a branch works.
+	 * @throws SQLException on database error
+	 * @throws TransactionException on error caught by the service
+	 */
+	@Test
+	public void testGetBranch() throws SQLException, TransactionException {
+		final Branch branch = adminService.createBranch("Branch 1457", "ADR45");
+		assertEquals(branch.getName(), adminService.getbranch(branch.getId()).getName(),
+				"retrieved branch has expected name");
 	}
 }

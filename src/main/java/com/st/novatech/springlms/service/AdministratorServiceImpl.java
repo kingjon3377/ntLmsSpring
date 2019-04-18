@@ -24,6 +24,7 @@ import com.st.novatech.springlms.dao.PublisherDao;
 import com.st.novatech.springlms.dao.PublisherDaoImpl;
 import com.st.novatech.springlms.exception.DeleteException;
 import com.st.novatech.springlms.exception.InsertException;
+import com.st.novatech.springlms.exception.RetrieveException;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.exception.UnknownSQLException;
 import com.st.novatech.springlms.exception.UpdateException;
@@ -34,6 +35,7 @@ import com.st.novatech.springlms.model.Branch;
 import com.st.novatech.springlms.model.Loan;
 import com.st.novatech.springlms.model.Publisher;
 import com.st.novatech.springlms.util.ThrowingRunnable;
+import org.springframework.stereotype.Service;
 
 /**
  * An implementation of the service class for administrative UIs.
@@ -43,6 +45,7 @@ import com.st.novatech.springlms.util.ThrowingRunnable;
  * @author Jonathan Lovelace
  *
  */
+@Service("AdministratorService")
 public final class AdministratorServiceImpl implements AdministratorService {
 	/**
 	 * DAO to access the library-branch table.
@@ -395,5 +398,64 @@ public final class AdministratorServiceImpl implements AdministratorService {
 			pending.addSuppressed(except);
 		}
 		return pending;
+	}
+
+	@Override
+	public Borrower getBorrower(final int cardNo) throws TransactionException {
+		try {
+			return borrowerDao.get(cardNo);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
+			throw rollback(new RetrieveException("Getting borrower record failed", except));
+		}
+	}
+
+	@Override
+	public Author getAuthor(final int authorId) throws TransactionException {
+		try {
+			return authorDao.get(authorId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
+			throw rollback(new RetrieveException("Getting borrower record failed", except));
+		}
+	}
+
+	@Override
+	public Publisher getPublisher(final int publisherId) throws TransactionException {
+		try {
+			return publisherDao.get(publisherId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
+			throw rollback(new RetrieveException("Getting borrower record failed", except));
+		}
+	}
+
+	@Override
+	public Branch getbranch(final int branchId) throws TransactionException {
+		try {
+			return branchDao.get(branchId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
+			throw rollback(new RetrieveException("Getting a branch failed", except));
+		}
+	}
+
+	@Override
+	public Book getBook(final int bookId) throws TransactionException {
+		try {
+			return bookDao.get(bookId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
+			throw rollback(new RetrieveException("Getting a book failed", except));
+		}
+	}
+	@Override
+	public Loan getLoan(final int cardNo, final int branchId, final int bookId) throws TransactionException {
+		try {
+			return loansDao.get(bookDao.get(bookId), borrowerDao.get(cardNo), branchDao.get(branchId));
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting a Loan record", except);
+			throw rollback(new RetrieveException("Getting a Loan failed", except));
+		}
 	}
 }

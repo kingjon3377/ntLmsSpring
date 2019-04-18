@@ -193,4 +193,49 @@ public interface AdministratorService extends Service {
 	 * @return all the loans in the database.
 	 */
 	List<Loan> getAllLoans() throws TransactionException;
+
+	/**
+	 * Get the borrower with the specified card number.
+	 *
+	 * @param cardNo the borrower's card number
+	 * @return the borrower with that card number, or null if none.
+	 */
+	Borrower getBorrower(int cardNo) throws TransactionException;
+
+	/**
+	 * Get the author with the specified id.
+	 *
+	 * @param authorId is the author's Id number
+	 * @return the author with that Id number, or null if none.
+	 */
+	Author getAuthor(int authorId) throws TransactionException;
+
+	/**
+	 * Get the publisher with the specified id.
+	 *
+	 * @param publisherId is the publisher's Id number
+	 * @return the publisher with that Id number, or null if none.
+	 */
+	Publisher getPublisher(int publisherId) throws TransactionException;
+
+	/**
+	 * Get a branch in the database.
+	 * 
+	 * @return a branch in the database
+	 */
+	Branch getbranch(int branchId) throws TransactionException;
+
+	/**
+	 * Get a book in the database.
+	 * 
+	 * @return a book in the database
+	 */
+	Book getBook(int bookId) throws TransactionException;
+
+	/**
+	 * Get a Loan of a specific Borrower and Book and Branch in the database.
+	 * 
+	 * @return a Loan in the database
+	 */
+	Loan getLoan(int cardNo, int branchId, int bookId) throws TransactionException;
 }

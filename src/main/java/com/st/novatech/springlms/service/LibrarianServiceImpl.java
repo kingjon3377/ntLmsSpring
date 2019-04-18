@@ -15,6 +15,7 @@ import com.st.novatech.springlms.dao.CopiesDaoImpl;
 import com.st.novatech.springlms.dao.DBConnectionFactory;
 import com.st.novatech.springlms.dao.LibraryBranchDao;
 import com.st.novatech.springlms.dao.LibraryBranchDaoImpl;
+import com.st.novatech.springlms.exception.RetrieveException;
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.exception.UnknownSQLException;
 import com.st.novatech.springlms.exception.UpdateException;
@@ -145,6 +146,31 @@ public final class LibrarianServiceImpl implements LibrarianService {
 			throw rollback(new UnknownSQLException("Getting copy records failed", except));
 		}
 	}
+
+	@Override
+	public Branch getbranch(int branchId) throws TransactionException {
+		Branch foundbranch = null;
+		try {
+			foundbranch = branchDao.get(branchId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
+			throw rollback(new RetrieveException("Getting a branch failed", except));
+		}
+		return foundbranch;
+	}
+
+	@Override
+	public Book getBook(int bookId) throws TransactionException {
+		Book foundbook = null;
+		try {
+			foundbook = bookDao.get(bookId);
+		} catch (final SQLException except) {
+			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
+			throw rollback(new RetrieveException("Getting a book failed", except));
+		}
+		return foundbook;
+	}
+	
 	@Override
 	public void commit() throws TransactionException {
 		try {

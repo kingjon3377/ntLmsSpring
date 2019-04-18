@@ -82,4 +82,24 @@ public interface BorrowerService extends Service {
 	 */
 	Borrower getBorrower(int cardNo) throws TransactionException;
 
+	/**
+	 * Get a branch in the database.
+	 * 
+	 * @return a branch in the database
+	 */
+	Branch getbranch(int branchId) throws TransactionException;
+
+	/**
+	 * Get a book in the database.
+	 * 
+	 * @return a book in the database
+	 */
+	Book getBook(int bookId) throws TransactionException;
+
+	/**
+	 * Get a Loan of a specific Borrower and Book and Branch in the database.
+	 * 
+	 * @return a Loan in the database
+	 */
+	Loan getLoan(int cardNo, int branchId, int bookId) throws TransactionException;
 }
