@@ -120,7 +120,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		try {
 			return branchDao.findAll();
 		} catch (final DataAccessException except) {
-			LOGGER.log(Level.SEVERE,  "SQL error while getting all branches", except);
+			LOGGER.log(Level.SEVERE,  "Error while getting all branches", except);
 			throw rollback(new UnknownSQLException("Getting all branches failed", except));
 		}
 	}
@@ -153,7 +153,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		try {
 			return copiesDao.getAllBranchCopies(branch);
 		} catch (final DataAccessException except) {
-			LOGGER.log(Level.SEVERE, "SQL error while getting branch copies", except);
+			LOGGER.log(Level.SEVERE, "Error while getting branch copies", except);
 			throw rollback(new UnknownSQLException("Getting branch copy records failed", except));
 		}
 	}
