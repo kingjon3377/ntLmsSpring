@@ -1,6 +1,5 @@
 package com.st.novatech.springlms.service;
 
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
