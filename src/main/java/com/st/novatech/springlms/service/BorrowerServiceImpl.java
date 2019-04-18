@@ -204,7 +204,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 					.collect(Collectors.toList());
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting loan records", except);
-			throw rollback(new UnknownSQLException("Getting loan records failed", except));
+			throw rollback(new RetrieveException("Getting loan records failed", except));
 		}
 	}
 
@@ -214,7 +214,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			return borrowerDao.findById(cardNo).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
-			throw rollback(new UnknownSQLException("Getting borrower record failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested borrower", except));
 		}
 	}
 
@@ -251,7 +251,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			return branchDao.findById(branchId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
-			throw rollback(new RetrieveException("Getting a branch failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested branch", except));
 		}
 	}
 
@@ -261,7 +261,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			return bookDao.findById(bookId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
-			throw rollback(new RetrieveException("Getting a book failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested book", except));
 		}
 	}
 
