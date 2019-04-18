@@ -120,4 +120,9 @@ public class BranchCopies {
 			return false;
 		}
 	}
+
+	@Override
+	public String toString() {
+		return getBranch().getName() + " has " + copies + " copies of " + getBook().getTitle() + ".";
+	}
 }
