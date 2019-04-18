@@ -33,8 +33,6 @@ import com.st.novatech.springlms.model.Branch;
 import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 
-import org.springframework.stereotype.Service;
-
 /**
  * The "service" class to help UIs for borrowers.
  *
