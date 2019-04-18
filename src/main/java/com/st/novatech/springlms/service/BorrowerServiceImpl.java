@@ -14,6 +14,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.st.novatech.springlms.dao.BookDao;
 import com.st.novatech.springlms.dao.BookLoansDao;
@@ -120,6 +121,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		}
 	}
 
+	@Transactional
 	@Override
 	public Loan borrowBook(final Borrower borrower, final Book book,
 			final Branch branch, final LocalDateTime dateOut,
@@ -153,6 +155,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		}
 	}
 
+	@Transactional
 	@Override
 	public Boolean returnBook(final Borrower borrower, final Book book,
 			final Branch branch, final LocalDate dueDate) throws TransactionException {
