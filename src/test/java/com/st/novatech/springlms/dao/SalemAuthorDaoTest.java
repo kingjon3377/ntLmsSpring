@@ -34,6 +34,7 @@ public class SalemAuthorDaoTest {
 	 * Sample author name for tests.
 	 */
 	private static final String SAMPLE_AUTHOR_NAME = "Robert Jr.";
+
 	/**
 	 * The DAO under test.
 	 */

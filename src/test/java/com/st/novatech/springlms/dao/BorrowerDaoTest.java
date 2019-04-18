@@ -33,6 +33,7 @@ class BorrowerDaoTest {
 	 */
 	@Autowired
 	private BorrowerDao testee;
+
 	/**
 	 * Branch DAO used in tests.
 	 */

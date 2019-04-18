@@ -47,14 +47,14 @@ public interface LibrarianService extends Service {
 
 	/**
 	 * Get a branch in the database.
-	 * 
+	 *
 	 * @return a branch in the database
 	 */
 	Branch getbranch(int branchId) throws TransactionException;
 
 	/**
 	 * Get a book in the database.
-	 * 
+	 *
 	 * @return a book in the database
 	 */
 	Book getBook(int bookId) throws TransactionException;

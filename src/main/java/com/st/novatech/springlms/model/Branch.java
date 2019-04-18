@@ -48,6 +48,7 @@ public class Branch implements Serializable {
 	protected Branch() {
 		this(0, "", "");
 	}
+
 	/**
 	 * To construct a branch object, callers must supply its ID number, name, and
 	 * address.

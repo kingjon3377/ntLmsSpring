@@ -203,7 +203,6 @@ public class SalemBorrowerServiceTest {
 				borrowerService.borrowBook(testBorrower, newBook, testBranch,
 						LocalDateTime.now(), LocalDate.now().plusWeeks(2)),
 				"Borrowing book with no copies returns null instead of loan");
-
 		adminService.deleteBook(newBook);
 	}
 

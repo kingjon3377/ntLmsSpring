@@ -223,6 +223,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			throw rollback(new UnknownSQLException("Getting borrower record failed", except));
 		}
 	}
+
 	@Override
 	public void commit() throws TransactionException {
 		try {

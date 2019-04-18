@@ -27,23 +27,28 @@ import com.st.novatech.springlms.service.BorrowerService;
 
 @RestController
 public class BorrowerController {
-	
+
+	/**
+	 * Borrower service.
+	 */
 	@Autowired
 	BorrowerService borrowerService;
-	
+
 	/**
-	 * allows a borrower to borrow a book from a branch and lets the client know of the status
-	 * 
-	 * @param cardNo	id for borrower
-	 * @param branchId	id for branch
-	 * @param bookId	id for book
-	 * @return	Loans if created correctly with an appropriate http code,
-	 * 	else an appropriate http error code
-	 * @throws TransactionException		if something goes wrong with any of the transactions
-	 * @throws AlreadyBorrowedException	if the borrrower already borrowed the requested
-	 * 	book from the requested branch
-	 * @throws NoCopiesException		if there are no copies for the requested book in
-	 * 	the requested branch
+	 * Allows a borrower to borrow a book from a branch and lets the client know of
+	 * the status.
+	 *
+	 * @param cardNo   id for borrower
+	 * @param branchId id for branch
+	 * @param bookId   id for book
+	 * @return Loans if created correctly with an appropriate http code, else an
+	 *         appropriate http error code
+	 * @throws TransactionException     if something goes wrong with any of the
+	 *                                  transactions
+	 * @throws AlreadyBorrowedException if the borrrower already borrowed the
+	 *                                  requested book from the requested branch
+	 * @throws NoCopiesException        if there are no copies for the requested
+	 *                                  book in the requested branch
 	 */
 	@RequestMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}/borrow", method = RequestMethod.POST)
 	public ResponseEntity<Loan> borrowBook(@PathVariable("cardNo") int cardNo,
@@ -73,17 +78,21 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
-	 * To retrieve a list of book copies of a particular branch, the client must supply a branch id, which the server
-	 * will use to get the associated branch entity, which is used to fetch the list of book copies of the
-	 * requested branch
-	 * 
-	 * @param branchId	used to get a list of book copies associated with the given branchId (branch)
-	 * @return	a list of book copies associated with the given branch Id if the branch associated to
-	 * the branch id exists or an internal server error (500) if the roll back fails
-	 * @throws TransactionException	A retrieval exception will be thrown if the branch associated to
-	 * the branch id given does not exist or if the search for the book copies list failed.
+	 * To retrieve a list of book copies of a particular branch, the client must
+	 * supply a branch id, which the server will use to get the associated branch
+	 * entity, which is used to fetch the list of book copies of the requested
+	 * branch.
+	 *
+	 * @param branchId used to get a list of book copies associated with the given
+	 *                 branchId (branch)
+	 * @return a list of book copies associated with the given branch Id if the
+	 *         branch associated to the branch id exists
+	 * @throws TransactionException A retrieval exception will be thrown if the
+	 *                              branch associated to the branch id given does
+	 *                              not exist or if the search for the book copies
+	 *                              list failed.
 	 */
 	@RequestMapping(path = "/branch/{branchId}/books/copies", method = RequestMethod.GET)
 	public ResponseEntity<Map<Book, Integer>> getAllBranchCopies(@PathVariable("branchId") int branchId) throws TransactionException {
@@ -102,20 +111,21 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
-	 * For client who would like to return a book
-	 * 
-	 * @param cardNo	id for a particular borrower
-	 * @param branchId	id for a particular branch
-	 * @param bookId	id for a particular book
-	 * @return			Success message with 204(NO_CONTENT) code if the book was returned correctly,
-	 * 404(NOT_FOUND) if the entry of the given cardNo, branchId, and bookId does not exist,
-	 * 409(CONFLICT) if the book is overdue, or returns a 500(INTERNAL_SERVER_ERROR) if the roll
-	 * back fails
-	 * @throws TransactionException Throws an UnknownSQLException if something goes wrong with
-	 * the book copies and throws a DeleteException if something goes wrong with deleting the
-	 * entry
+	 * For client who would like to return a book.
+	 *
+	 * @param cardNo   id for a particular borrower
+	 * @param branchId id for a particular branch
+	 * @param bookId   id for a particular book
+	 * @return Success message with 204(NO_CONTENT) code if the book was returned
+	 *         correctly, 404(NOT_FOUND) if the entry of the given cardNo, branchId,
+	 *         and bookId does not exist, 409(CONFLICT) if the book is overdue, or
+	 *         returns a 500(INTERNAL_SERVER_ERROR) if the roll back fails
+	 * @throws TransactionException Throws an UnknownSQLException if something goes
+	 *                              wrong with the book copies and throws a
+	 *                              DeleteException if something goes wrong with
+	 *                              deleting the entry
 	 */
 	@DeleteMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}/return")
 	public ResponseEntity<String> returnBook(@PathVariable("cardNo") int cardNo,
@@ -126,9 +136,9 @@ public class BorrowerController {
 			Book book = borrowerService.getBook(bookId);
 			if(borrower == null) {
 				throw new RetrieveException("Requested borrower not found");
-			} else if(branch == null) {
+			} else if (branch == null) {
 				throw new RetrieveException("Requested branch not found");
-			} else if(book == null) {
+			} else if (book == null) {
 				throw new RetrieveException("Requested book not found");
 			} else {
 				// non of the given ids were incorrect
@@ -150,14 +160,16 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get all branches from which the borrower has an outstanding book loan.
-	 * 
-	 * @param cardNo	id for a particular borrower
-	 * @return			200(OK) if the borrower exists in the database and if everything goes correctly
-	 * or will return 500(an internal server error) the roll back fails
-	 * @throws TransactionException retrieve exception if it cannot find the given borrower
+	 *
+	 * @param cardNo id for a particular borrower
+	 * @return 200(OK) if the borrower exists in the database and if everything goes
+	 *         correctly or will return 500(an internal server error) the roll back
+	 *         fails
+	 * @throws TransactionException retrieve exception if it cannot find the given
+	 *                              borrower
 	 */
 	@GetMapping(path = "/borrower/{cardNo}/loansWithBranch")
 	public ResponseEntity<List<Branch>> getAllBranchesWithLoan(@PathVariable("cardNo") int cardNo) throws TransactionException {
@@ -176,14 +188,16 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get all book loans the borrower has borrowed from any library branch.
-	 * 
-	 * @param cardNo	id for a particular borrower
-	 * @return			200(OK) if the borrower exists in the database and if everything goes correctly
-	 * or will return 500(an internal server error) the roll back fails
-	 * @throws TransactionException	retrieve exception if it cannot find the given borrower
+	 *
+	 * @param cardNo id for a particular borrower
+	 * @return 200(OK) if the borrower exists in the database and if everything goes
+	 *         correctly or will return 500(an internal server error) the roll back
+	 *         fails
+	 * @throws TransactionException retrieve exception if it cannot find the given
+	 *                              borrower
 	 */
 	@GetMapping(path = "/borrower/{cardNo}/borrowerLoans")
 	public ResponseEntity<List<Loan>> getAllBorrowedBooks(@PathVariable("cardNo") int cardNo) throws TransactionException {
@@ -202,14 +216,15 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
-	 * Give the client a borrower with a given cardNo
-	 * 
+	 * Give the client a borrower with a given card number.
+	 *
 	 * @param cardNo id for a particular borrower
-	 * @return a ResponseEntity of a borrower with an ok code
-	 * or will return 500(an internal server error) the roll back fails
-	 * @throws TransactionException retrieve exception if it cannot find the requested borrower
+	 * @return a ResponseEntity of a borrower with an ok code or will return 500(an
+	 *         internal server error) the roll back fails
+	 * @throws TransactionException retrieve exception if it cannot find the
+	 *                              requested borrower
 	 */
 	@RequestMapping(path="/borrower/{cardNo}", method = RequestMethod.GET)
 	public ResponseEntity<Borrower> getBorrowerById(@PathVariable("cardNo") int cardNo) throws TransactionException {
@@ -228,17 +243,20 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Give the client a branch with a given branchId
-	 * 
-	 * @param branchId	id for a particular branch
-	 * @return	a ResponseEntity of a branch with an 200(OK) code
-	 * or will return 500(an internal server error) the roll back fails
-	 * @throws TransactionException retrieve exception if it cannot find the requested branch
+	 *
+	 * @param branchId id for a particular branch
+	 * @return a ResponseEntity of a branch with an 200(OK) code or will return
+	 *         500(an internal server error) the roll back fails
+	 * @throws TransactionException retrieve exception if it cannot find the
+	 *                              requested branch
 	 */
 	@GetMapping(path = "/branch/{branchId}")
-	public ResponseEntity<Branch> getbranch(@PathVariable("branchId") int branchId) throws TransactionException {
+	public ResponseEntity<Branch> getbranch(
+			@PathVariable("branchId") final int branchId)
+			throws TransactionException {
 		try {
 			Branch foundBranch = borrowerService.getbranch(branchId);
 			if(foundBranch == null) {
@@ -254,14 +272,15 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Give the client a book with a given bookId
-	 * 
-	 * @param bookId	id for a particular branch
-	 * @return	a ResponseEntity of a book with an 200(OK) code
-	 * or will return 500(an internal server error) the roll back fails
-	 * @throws TransactionException	retrieve exception if it cannot find the requested book
+	 *
+	 * @param bookId id for a particular branch
+	 * @return a ResponseEntity of a book with an 200(OK) code or will return 500(an
+	 *         internal server error) the roll back fails
+	 * @throws TransactionException retrieve exception if it cannot find the
+	 *                              requested book
 	 */
 	@GetMapping(path = "/book/{bookId}")
 	public ResponseEntity<Book> getBook(@PathVariable("bookId") int bookId) throws TransactionException {
@@ -280,16 +299,17 @@ public class BorrowerController {
 			}
 		}
 	}
-	
+
 	/**
 	 * gives client a loan object based on uri given by client
-	 * 
-	 * @param cardNo	id for a borrower
-	 * @param branchId	id for a branch
-	 * @param bookId	id for a book
-	 * @return a ResponseEntity of a loan with an ok code or an appropriate http error code
-	 * @throws TransactionException send an internal server error code if rollback fails,
-	 * 	else sends a not found code
+	 *
+	 * @param cardNo   id for a borrower
+	 * @param branchId id for a branch
+	 * @param bookId   id for a book
+	 * @return a ResponseEntity of a loan with an ok code or an appropriate http
+	 *         error code
+	 * @throws TransactionException send an internal server error code if rollback
+	 *                              fails, else sends a not found code
 	 */
 	@RequestMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}", method = RequestMethod.GET)
 	public ResponseEntity<Loan> getLoanByIds(@PathVariable("cardNo") int cardNo,

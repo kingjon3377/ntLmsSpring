@@ -63,6 +63,7 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param borrower in question
 	 * @return all branches the borrower owes a book return to.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
 	List<Branch> getAllBranchesWithLoan(Borrower borrower) throws TransactionException;
 
@@ -71,6 +72,7 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param borrower in question
 	 * @return the list of book loans the borrower has out from any library.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
 	List<Loan> getAllBorrowedBooks(Borrower borrower) throws TransactionException;
 
@@ -79,27 +81,31 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param cardNo the borrower's card number
 	 * @return the borrower with that card number, or null if none.
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Borrower getBorrower(int cardNo) throws TransactionException;
 
 	/**
 	 * Get a branch in the database.
-	 * 
+	 *
 	 * @return a branch in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Branch getbranch(int branchId) throws TransactionException;
 
 	/**
 	 * Get a book in the database.
-	 * 
+	 *
 	 * @return a book in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Book getBook(int bookId) throws TransactionException;
 
 	/**
 	 * Get a Loan of a specific Borrower and Book and Branch in the database.
-	 * 
+	 *
 	 * @return a Loan in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Loan getLoan(int cardNo, int branchId, int bookId) throws TransactionException;
 }
