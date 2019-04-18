@@ -10,6 +10,8 @@ import javax.persistence.ManyToOne;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 /**
  * A class to be the primary key of a {@link BranchCopies} for JPA, which
  * requires every entity to have a single primary key.
@@ -30,14 +32,18 @@ public class CopiesIdentity implements Serializable {
 	/**
 	 * The branch that owns the copies.
 	 */
+	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
-	@JoinColumn(name = "branchId")
+	@JoinColumn(name = "branchId", insertable = false, updatable = false)
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Branch branch;
 
 	/**
 	 * The book that this represents copies of.
 	 */
+	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "bookId")
 	@OnDelete(action = OnDeleteAction.CASCADE)

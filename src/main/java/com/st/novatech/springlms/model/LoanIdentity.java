@@ -29,6 +29,8 @@ public class LoanIdentity implements Serializable {
 	/**
 	 * The book that was borrowed.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "bookId")
 	@OnDelete(action = OnDeleteAction.CASCADE)
@@ -37,6 +39,8 @@ public class LoanIdentity implements Serializable {
 	/**
 	 * The borrower who checked out the book.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "cardNo")
 	@OnDelete(action = OnDeleteAction.CASCADE)
@@ -45,6 +49,8 @@ public class LoanIdentity implements Serializable {
 	/**
 	 * The branch from which the book was checked out.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "branchId")
 	@OnDelete(action = OnDeleteAction.CASCADE)
