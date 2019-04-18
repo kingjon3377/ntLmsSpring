@@ -252,37 +252,32 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	@Override
 	public Branch getBranch(final int branchId) throws TransactionException {
 		try {
-			foundbranch = branchDao.findById(branchId).orElse(null);
+			return branchDao.findById(branchId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
 			throw rollback(new RetrieveException("Getting a branch failed", except));
 		}
-		return foundbranch;
 	}
 
 	@Override
 	public Book getBook(final int bookId) throws TransactionException {
-		Book foundbook = null;
 		try {
-			foundbook = bookDao.findById(bookId).get();
+			return bookDao.findById(bookId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
 			throw rollback(new RetrieveException("Getting a book failed", except));
 		}
-		return foundbook;
 	}
 
 	@Override
 	public Loan getLoan(final int cardNo, final int branchId, final int bookId) throws TransactionException {
-		Loan foundLoan = null;
 		try {
-			foundLoan = loanDao.get(bookDao.findById(bookId).get(),
+			return loanDao.get(bookDao.findById(bookId).get(),
 					borrowerDao.findById(cardNo).get(),
 					branchDao.findById(branchId).get());
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a Loan record", except);
 			throw rollback(new RetrieveException("Getting a Loan failed", except));
 		}
-		return foundLoan;
 	}
 }
