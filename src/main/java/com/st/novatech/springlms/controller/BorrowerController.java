@@ -51,27 +51,31 @@ public class BorrowerController {
 	 *                                  book in the requested branch
 	 */
 	@RequestMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}/borrow", method = RequestMethod.POST)
-	public ResponseEntity<Loan> borrowBook(@PathVariable("cardNo") int cardNo,
-			@PathVariable("branchId") int branchId,
-			@PathVariable("bookId") int bookId) throws TransactionException, AlreadyBorrowedException, NoCopiesException {
-		Borrower foundBorrower = borrowerService.getBorrower(cardNo);
-		Book foundBook = borrowerService.getBook(bookId);
-		Branch foundBranch = borrowerService.getbranch(branchId);
+	public ResponseEntity<Loan> borrowBook(@PathVariable("cardNo") final int cardNo,
+			@PathVariable("branchId") final int branchId,
+			@PathVariable("bookId") final int bookId) throws TransactionException,
+			AlreadyBorrowedException, NoCopiesException {
+		final Borrower foundBorrower = borrowerService.getBorrower(cardNo);
+		final Book foundBook = borrowerService.getBook(bookId);
+		final Branch foundBranch = borrowerService.getBranch(branchId);
 		try {
-			Loan foundLoan = borrowerService.getLoan(cardNo, branchId, bookId);
-			if(foundLoan != null) {
-				throw new AlreadyBorrowedException("You have already borrowed the requsted book");
+			final Loan foundLoan = borrowerService.getLoan(cardNo, branchId, bookId);
+			if (foundLoan != null) {
+				throw new AlreadyBorrowedException(
+						"You have already borrowed the requsted book");
 			} else {
-				Loan newLoan = borrowerService.borrowBook(foundBorrower, foundBook, foundBranch,
-						LocalDateTime.now(), LocalDate.now().plusWeeks(1));
-				if(newLoan == null) {
-					throw new NoCopiesException("There are no copies for the requsted book in this library branch");
+				final Loan newLoan = borrowerService.borrowBook(foundBorrower,
+						foundBook, foundBranch, LocalDateTime.now(),
+						LocalDate.now().plusWeeks(1));
+				if (newLoan == null) {
+					throw new NoCopiesException(
+							"There are no copies for the requsted book in this library branch");
 				} else {
-					return new ResponseEntity<Loan>(newLoan, HttpStatus.CREATED);
+					return new ResponseEntity<>(newLoan, HttpStatus.CREATED);
 				}
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -95,17 +99,19 @@ public class BorrowerController {
 	 *                              list failed.
 	 */
 	@RequestMapping(path = "/branch/{branchId}/books/copies", method = RequestMethod.GET)
-	public ResponseEntity<Map<Book, Integer>> getAllBranchCopies(@PathVariable("branchId") int branchId) throws TransactionException {
+	public ResponseEntity<List<BranchCopies>> getAllBranchCopies(
+			@PathVariable("branchId") final int branchId)
+			throws TransactionException {
 		try {
-			Branch foundBranch = borrowerService.getbranch(branchId);
-			if(foundBranch == null) {
+			final Branch foundBranch = borrowerService.getBranch(branchId);
+			if (foundBranch == null) {
 				throw new RetrieveException("Requested branch not found");
 			}
 			final List<BranchCopies> listOfAllBranchCopies = borrowerService
 					.getAllBranchCopies(foundBranch);
-			return new ResponseEntity<List<BranchCopies>>(listOfAllBranchCopies, HttpStatus.OK);
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+			return new ResponseEntity<>(listOfAllBranchCopies, HttpStatus.OK);
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -129,13 +135,15 @@ public class BorrowerController {
 	 *                              deleting the entry
 	 */
 	@DeleteMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}/return")
-	public ResponseEntity<String> returnBook(@PathVariable("cardNo") int cardNo,
-			@PathVariable("branchId") int branchId, @PathVariable("bookId") int bookId) throws TransactionException {
+	public ResponseEntity<String> returnBook(
+			@PathVariable("cardNo") final int cardNo,
+			@PathVariable("branchId") final int branchId,
+			@PathVariable("bookId") final int bookId) throws TransactionException {
 		try {
-			Borrower borrower = borrowerService.getBorrower(cardNo);
-			Branch branch = borrowerService.getbranch(branchId);
-			Book book = borrowerService.getBook(bookId);
-			if(borrower == null) {
+			final Borrower borrower = borrowerService.getBorrower(cardNo);
+			final Branch branch = borrowerService.getBranch(branchId);
+			final Book book = borrowerService.getBook(bookId);
+			if (borrower == null) {
 				throw new RetrieveException("Requested borrower not found");
 			} else if (branch == null) {
 				throw new RetrieveException("Requested branch not found");
@@ -143,18 +151,23 @@ public class BorrowerController {
 				throw new RetrieveException("Requested book not found");
 			} else {
 				// non of the given ids were incorrect
-				Boolean success = borrowerService.returnBook(borrower, book, branch, LocalDate.now());
-				if(success == null) {
-					return new ResponseEntity<String>("You (" + borrower.getName() + ") do not have " +
-							book.getTitle() + " checkout from " + branch.getName(), HttpStatus.NOT_FOUND);
-				} else if(success.booleanValue()) {
-					return new ResponseEntity<String>("Successfully returned " + book.getTitle(), HttpStatus.NO_CONTENT);
+				final Boolean success = borrowerService.returnBook(borrower, book,
+						branch, LocalDate.now());
+				if (success == null) {
+					return new ResponseEntity<>("You (" + borrower.getName()
+							+ ") do not have " + book.getTitle() + " checkout from "
+							+ branch.getName(), HttpStatus.NOT_FOUND);
+				} else if (success.booleanValue()) {
+					return new ResponseEntity<>(
+							"Successfully returned " + book.getTitle(),
+							HttpStatus.NO_CONTENT);
 				} else {
-					return new ResponseEntity<String>("This book is overdue", HttpStatus.CONFLICT);
+					return new ResponseEntity<>("This book is overdue",
+							HttpStatus.CONFLICT);
 				}
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -173,16 +186,19 @@ public class BorrowerController {
 	 *                              borrower
 	 */
 	@GetMapping(path = "/borrower/{cardNo}/loansWithBranch")
-	public ResponseEntity<List<Branch>> getAllBranchesWithLoan(@PathVariable("cardNo") int cardNo) throws TransactionException {
+	public ResponseEntity<List<Branch>> getAllBranchesWithLoan(
+			@PathVariable("cardNo") final int cardNo) throws TransactionException {
 		try {
-			Borrower foundBorrower = borrowerService.getBorrower(cardNo);
-			if(foundBorrower == null) {
+			final Borrower foundBorrower = borrowerService.getBorrower(cardNo);
+			if (foundBorrower == null) {
 				throw new RetrieveException("Requested borrower not found");
 			}
-			List<Branch> listOfBranchesForBorrowerWithLoans = borrowerService.getAllBranchesWithLoan(foundBorrower);
-			return new ResponseEntity<List<Branch>>(listOfBranchesForBorrowerWithLoans, HttpStatus.OK);
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+			final List<Branch> listOfBranchesForBorrowerWithLoans = borrowerService
+					.getAllBranchesWithLoan(foundBorrower);
+			return new ResponseEntity<>(listOfBranchesForBorrowerWithLoans,
+					HttpStatus.OK);
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -201,16 +217,18 @@ public class BorrowerController {
 	 *                              borrower
 	 */
 	@GetMapping(path = "/borrower/{cardNo}/borrowerLoans")
-	public ResponseEntity<List<Loan>> getAllBorrowedBooks(@PathVariable("cardNo") int cardNo) throws TransactionException {
+	public ResponseEntity<List<Loan>> getAllBorrowedBooks(
+			@PathVariable("cardNo") final int cardNo) throws TransactionException {
 		try {
-			Borrower foundBorrower = borrowerService.getBorrower(cardNo);
-			if(foundBorrower == null) {
+			final Borrower foundBorrower = borrowerService.getBorrower(cardNo);
+			if (foundBorrower == null) {
 				throw new RetrieveException("Requested borrower not found");
 			}
-			List<Loan> listOfLoansForBorrower = borrowerService.getAllBorrowedBooks(foundBorrower);
-			return new ResponseEntity<List<Loan>>(listOfLoansForBorrower, HttpStatus.OK);
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+			final List<Loan> listOfLoansForBorrower = borrowerService
+					.getAllBorrowedBooks(foundBorrower);
+			return new ResponseEntity<>(listOfLoansForBorrower, HttpStatus.OK);
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -227,17 +245,18 @@ public class BorrowerController {
 	 * @throws TransactionException retrieve exception if it cannot find the
 	 *                              requested borrower
 	 */
-	@RequestMapping(path="/borrower/{cardNo}", method = RequestMethod.GET)
-	public ResponseEntity<Borrower> getBorrowerById(@PathVariable("cardNo") int cardNo) throws TransactionException {
+	@RequestMapping(path = "/borrower/{cardNo}", method = RequestMethod.GET)
+	public ResponseEntity<Borrower> getBorrowerById(
+			@PathVariable("cardNo") final int cardNo) throws TransactionException {
 		try {
-			Borrower foundBorrower = borrowerService.getBorrower(cardNo);
-			if(foundBorrower == null) {
+			final Borrower foundBorrower = borrowerService.getBorrower(cardNo);
+			if (foundBorrower == null) {
 				throw new RetrieveException("Requested borrower not found");
 			} else {
-				return new ResponseEntity<Borrower>(foundBorrower, HttpStatus.OK);
+				return new ResponseEntity<>(foundBorrower, HttpStatus.OK);
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -259,14 +278,14 @@ public class BorrowerController {
 			@PathVariable("branchId") final int branchId)
 			throws TransactionException {
 		try {
-			Branch foundBranch = borrowerService.getbranch(branchId);
-			if(foundBranch == null) {
+			final Branch foundBranch = borrowerService.getBranch(branchId);
+			if (foundBranch == null) {
 				throw new RetrieveException("Requested branch not found");
 			} else {
-				return new ResponseEntity<Branch>(foundBranch, HttpStatus.OK);
+				return new ResponseEntity<>(foundBranch, HttpStatus.OK);
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -284,16 +303,17 @@ public class BorrowerController {
 	 *                              requested book
 	 */
 	@GetMapping(path = "/book/{bookId}")
-	public ResponseEntity<Book> getBook(@PathVariable("bookId") int bookId) throws TransactionException {
+	public ResponseEntity<Book> getBook(@PathVariable("bookId") final int bookId)
+			throws TransactionException {
 		try {
-			Book foundBook = borrowerService.getBook(bookId);
-			if(foundBook == null) {
+			final Book foundBook = borrowerService.getBook(bookId);
+			if (foundBook == null) {
 				throw new RetrieveException("Requested book not found");
 			} else {
-				return new ResponseEntity<Book>(foundBook, HttpStatus.OK);
+				return new ResponseEntity<>(foundBook, HttpStatus.OK);
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
@@ -313,18 +333,19 @@ public class BorrowerController {
 	 *                              fails, else sends a not found code
 	 */
 	@RequestMapping(path = "/borrower/{cardNo}/branch/{branchId}/book/{bookId}", method = RequestMethod.GET)
-	public ResponseEntity<Loan> getLoanByIds(@PathVariable("cardNo") int cardNo,
-			@PathVariable("branchId") int branchId,
-			@PathVariable("bookId") int bookId) throws TransactionException {
+	public ResponseEntity<Loan> getLoanByIds(
+			@PathVariable("cardNo") final int cardNo,
+			@PathVariable("branchId") final int branchId,
+			@PathVariable("bookId") final int bookId) throws TransactionException {
 		try {
-			Loan loan = borrowerService.getLoan(cardNo, branchId, bookId);
-			if(loan == null) {
+			final Loan loan = borrowerService.getLoan(cardNo, branchId, bookId);
+			if (loan == null) {
 				throw new RetrieveException("Requested loan not found");
 			} else {
-				return new ResponseEntity<Loan>(loan, HttpStatus.OK);
+				return new ResponseEntity<>(loan, HttpStatus.OK);
 			}
-		} catch (TransactionException exception) {
-			if(exception.getSuppressed().length > 0) {
+		} catch (final TransactionException exception) {
+			if (exception.getSuppressed().length > 0) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			} else {
 				throw exception;
