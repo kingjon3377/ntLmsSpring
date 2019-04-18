@@ -310,7 +310,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	 * @param branch	branch in question
 	 * @param book		book in question
 	 * @return			number of copies for a given branch and book
-	 * @throws TransactionException
+	 * @throws TransactionException on error in the DAO layer
 	 */
 	protected int getCopies(final Branch branch, final Book book) throws TransactionException {
 		try {
