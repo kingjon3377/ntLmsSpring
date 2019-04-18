@@ -90,7 +90,7 @@ public interface BorrowerService extends Service {
 	 * @return a branch in the database
 	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
-	Branch getbranch(int branchId) throws TransactionException;
+	Branch getBranch(int branchId) throws TransactionException;
 
 	/**
 	 * Get a book in the database.

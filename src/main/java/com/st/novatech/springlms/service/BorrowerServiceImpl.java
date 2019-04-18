@@ -252,8 +252,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Branch getbranch(final int branchId) throws TransactionException {
-		Branch foundbranch = null;
+	public Branch getBranch(final int branchId) throws TransactionException {
 		try {
 			foundbranch = branchDao.findById(branchId).orElse(null);
 		} catch (final DataAccessException except) {
