@@ -31,6 +31,8 @@ public interface BorrowerService extends Service {
 	 * @return the object representing the loan, or null if either the the borrower
 	 *         already has that book out from that branch or that branch has no
 	 *         available copies of that book.
+	 * @throws TransactionException if something occurs while attempting to borrow
+	 * a book
 	 */
 	Loan borrowBook(Borrower borrower, Book book, Branch branch,
 			LocalDateTime dateOut, LocalDate dueDate) throws TransactionException;
@@ -40,6 +42,7 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param branch the branch in question
 	 * @return a list of copies for the requested branch.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
 	List<BranchCopies> getAllBranchCopies(Branch branch) throws TransactionException;
 
@@ -53,6 +56,8 @@ public interface BorrowerService extends Service {
 	 * @param branch     the branch from which it was borrowed
 	 * @param returnDate the date the borrower returned the book
 	 * @return true on success, false if the book was overdue, and null if it was not present
+	 * @throws TransactionException if something occurs while attempting to return
+	 * a book
 	 */
 	Boolean returnBook(Borrower borrower, Book book, Branch branch,
 			LocalDate returnDate) throws TransactionException;
