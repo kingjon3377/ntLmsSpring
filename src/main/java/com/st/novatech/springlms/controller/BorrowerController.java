@@ -269,7 +269,7 @@ public class BorrowerController {
 	}
 
 	/**
-	 * Give the client a branch with a given branchId
+	 * Give the client a branch with a given branchId.
 	 *
 	 * @param branchId id for a particular branch
 	 * @return a ResponseEntity of a branch with an 200(OK) code or will return
@@ -296,7 +296,7 @@ public class BorrowerController {
 	}
 
 	/**
-	 * Give the client a book with a given bookId
+	 * Give the client a book with a given bookId.
 	 *
 	 * @param bookId id for a particular branch
 	 * @return a ResponseEntity of a book with an 200(OK) code or will return 500(an
@@ -322,7 +322,7 @@ public class BorrowerController {
 	}
 
 	/**
-	 * gives client a loan object based on uri given by client
+	 * Gives client a loan object based on URI given by client.
 	 *
 	 * @param cardNo   id for a borrower
 	 * @param branchId id for a branch
