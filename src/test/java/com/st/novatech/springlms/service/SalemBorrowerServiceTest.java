@@ -155,18 +155,15 @@ public class SalemBorrowerServiceTest {
 	 * @throws TransactionException on error caught by the service
 	 */
 	@DisplayName("Can return a book because not over the due date and no. of copies goes back up")
-	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void returnBookTest() throws TransactionException {
-		final int copiesBeforeReturning = borrowerService
-				.getAllBranchCopies(testBranch).get(testBook);
+		final int copiesBeforeReturning = libService.getCopies(testBook, testBranch);
 		assertTrue(
 				borrowerService.returnBook(testBorrower, testBook, testBranch,
 						LocalDate.now().plusWeeks(1)),
 				"returning book one week before due date is accepted");
 		borrowerService.commit();
-		final int copiesAfterReturning = borrowerService
-				.getAllBranchCopies(testBranch).get(testBook);
+		final int copiesAfterReturning = libService.getCopies(testBook, testBranch);
 
 		assertEquals(copiesBeforeReturning + 1, copiesAfterReturning,
 				"returning increments copy count");
@@ -212,21 +209,19 @@ public class SalemBorrowerServiceTest {
 	 * @throws TransactionException on error caught by the service
 	 */
 	@DisplayName("borrow a book and # of copies goes down")
-	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void borrowBookAndNoOfCopiesDown() throws TransactionException {
 		// returning 1 week before it is due
 		borrowerService.returnBook(testBorrower, testBook, testBranch,
 				LocalDate.now().plusWeeks(1));
 		borrowerService.commit();
-		final int copiesBeforeBorrowing = borrowerService
-				.getAllBranchCopies(testBranch).get(testBook);
+		final int copiesBeforeBorrowing = libService.getCopies(testBook, testBranch);
 
 		borrowerService.borrowBook(testBorrower, testBook, testBranch,
 				LocalDateTime.now(), LocalDate.now().plusWeeks(2));
 		borrowerService.commit();
 		assertEquals(copiesBeforeBorrowing - 1,
-				borrowerService.getAllBranchCopies(testBranch).get(testBook),
+				libService.getCopies(testBook, testBranch),
 				"borrowing decremented number of copies");
 	}
 

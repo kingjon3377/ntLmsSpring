@@ -114,7 +114,6 @@ public class SalemLibrarianServiceTest {
 	 * @throws TransactionException on error caught by the service
 	 */
 	@DisplayName("Adds noOfCopies to the book copies table if it doesnt already exist")
-	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void setBranchCopiesNonExistingTest() throws TransactionException {
 		final List<BranchCopies> previousListOfCopies = libService.getAllCopies();

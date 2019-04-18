@@ -146,7 +146,6 @@ public class SalemCopiesDaoTest {
 	 * @throws SQLException on database error
 	 */
 	@DisplayName("Updating an entry if it exists")
-	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void setEntryWithNewNoOfCopies() throws SQLException {
 		final int newNoOfCopies = 100;
