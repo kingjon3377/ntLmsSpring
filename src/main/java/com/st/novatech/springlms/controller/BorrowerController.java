@@ -250,7 +250,7 @@ public class BorrowerController {
 	 * @throws TransactionException retrieve exception if it cannot find the
 	 *                              requested borrower
 	 */
-	@GetMapping(path="/borrower/{cardNo}")
+	@GetMapping(path = "/borrower/{cardNo}")
 	public ResponseEntity<Borrower> getBorrowerById(
 			@PathVariable("cardNo") final int cardNo) {
 		try {

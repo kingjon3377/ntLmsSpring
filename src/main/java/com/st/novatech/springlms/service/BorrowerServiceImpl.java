@@ -305,7 +305,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	/**
-	 * Get the copies entity for a given branch and book
+	 * Get the copies entity for a given branch and book.
 	 *
 	 * @param branch	branch in question
 	 * @param book		book in question
