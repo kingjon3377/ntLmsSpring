@@ -48,7 +48,8 @@ public final class CatalogController {
 	 * @return the list of all books in the database
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping({"/books", "/books/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@RequestMapping({"/books", "/books/"})
 	public List<Book> getBooks() throws TransactionException {
 		return service.getAllBooks();
 	}
@@ -85,7 +86,8 @@ public final class CatalogController {
 	 * @return the book
 	 * @throws TransactionException if book not found, or on internal error
 	 */
-	@RequestMapping({"/book/{bookId}","/book/{bookId}/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@RequestMapping({"/book/{bookId}","/book/{bookId}/"})
 	public Book getBook(@PathVariable("bookId") final int bookId) throws TransactionException {
 		final Book book = service.getBook(bookId);
 		if (book == null) {

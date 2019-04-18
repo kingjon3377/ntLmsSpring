@@ -40,7 +40,8 @@ public final class ExecutiveController {
 	 * @return the list of all branches in the database.
 	 * @throws TransactionException on internal error.
 	 */
-	@RequestMapping({"/branches", "/branches/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@RequestMapping({"/branches", "/branches/"})
 	public List<Branch> getBranches() throws TransactionException {
 		return service.getAllBranches();
 	}
@@ -59,7 +60,8 @@ public final class ExecutiveController {
 	 * @return the branch with that ID
 	 * @throws TransactionException if branch not found, or on internal error
 	 */
-	@RequestMapping({"/branch/{branchId}", "/branch/{branchId}/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@RequestMapping(path = {"/branch/{branchId}", "/branch/{branchId}/"}, method = RequestMethod.GET)
 	public Branch getBranch(@PathVariable("branchId") final int branchId)
 			throws TransactionException {
 		final Branch branch = service.getBranch(branchId);
@@ -92,8 +94,9 @@ public final class ExecutiveController {
 	 * @return the updated branch
 	 * @throws TransactionException if author not found or on internal error
 	 */
-	@RequestMapping(path = { "/branch/{branchId}",
-			"/branch/{branchId}/" }, method = RequestMethod.PUT)
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@RequestMapping(path = { "/branch/{branchId}",
+//			"/branch/{branchId}/" }, method = RequestMethod.PUT)
 	public Branch updateBranch(@PathVariable("branchId") final int branchId,
 			@RequestBody final Branch input) throws TransactionException {
 		final Branch branch = service.getBranch(branchId);
