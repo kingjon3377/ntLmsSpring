@@ -65,12 +65,7 @@ public class BorrowerController {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find the requested branch");
 			} else {
 				final Loan foundLoan = borrowerService.getLoan(cardNo, branchId, bookId);
-				if (foundLoan != null) {
-					// TODO: Make AlreadyBorrowedException get translated to CONFLICT; make it take Book and Branch params
-					throw new ResponseStatusException(HttpStatus.CONFLICT,
-							"You have already borrowed " + foundBook.getTitle()
-									+ " from " + foundBranch.getName());
-				} else {
+				if (foundLoan == null) {
 					final Loan newLoan = borrowerService.borrowBook(foundBorrower,
 							foundBook, foundBranch, LocalDateTime.now(),
 							LocalDate.now().plusWeeks(1));
@@ -82,6 +77,11 @@ public class BorrowerController {
 					} else {
 						return new ResponseEntity<>(newLoan, HttpStatus.CREATED);
 					}
+				} else {
+					// TODO: Make AlreadyBorrowedException get translated to CONFLICT; make it take Book and Branch params
+					throw new ResponseStatusException(HttpStatus.CONFLICT,
+							"You have already borrowed " + foundBook.getTitle()
+									+ " from " + foundBranch.getName());
 				}
 			}
 		} catch (final TransactionException exception) {
