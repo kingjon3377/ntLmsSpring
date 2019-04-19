@@ -36,7 +36,7 @@ public class BorrowerController {
 	 * Borrower service.
 	 */
 	@Autowired
-	BorrowerService borrowerService;
+	private BorrowerService borrowerService;
 
 	/**
 	 * Logger for handling errors in the DAO layer.
