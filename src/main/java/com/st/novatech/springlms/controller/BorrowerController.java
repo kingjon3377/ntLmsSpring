@@ -25,6 +25,10 @@ import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 import com.st.novatech.springlms.service.BorrowerService;
 
+/**
+ * Class to handle REST web requests accessible to borrowers.
+ * @author Jonathan Lovelace
+ */
 @RestController
 public class BorrowerController {
 

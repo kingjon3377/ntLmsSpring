@@ -31,17 +31,28 @@ import org.springframework.web.context.WebApplicationContext;
 //@ContextConfiguration(classes = {TestWebConfig.class, TestBackEndConfiguration.class})
 //@TestInstance(Lifecycle.PER_CLASS)
 public class BorrowerControllerTest {
-
+	/**
+	 * Application context in which the test runs.
+	 */
 	@Autowired
 	private WebApplicationContext wac;
-
+	/**
+	 * UI mock-input provider.
+	 */
 	private MockMvc mockMvc;
 
+	/**
+	 * Set up the mock before each test.
+	 */
 	@BeforeEach
 	public void setUp() {
 		this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
 	}
 
+	/**
+	 * Test that getting a borrower returns a 200-level status code.
+	 * @throws Exception if something goes wrong
+	 */
 	@DisplayName("Get a borrower that exists")
 	@Disabled("Requires databse setup that isn't provided here")
 	@Test
