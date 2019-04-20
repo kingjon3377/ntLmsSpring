@@ -13,6 +13,7 @@ import javax.persistence.Table;
  * instead, its identity consists in the intersection of the book and branch.
  *
  * @author Jonathan Lovelace
+ * @author Salem Ozaki
  */
 @Entity
 @Table(name = "tbl_book_copies")
@@ -22,17 +23,20 @@ public class BranchCopies {
 	 */
 	@EmbeddedId
 	private CopiesIdentity id;
+
 	/**
 	 * The number of copies of the book that the branch currently holds.
 	 */
 	@Column(name = "noOfCopies")
 	private int copies;
+
 	/**
 	 * No-arg cosntructor required for JPA.
 	 */
 	protected BranchCopies() {
 		this(null, null, 0);
 	}
+
 	/**
 	 * To construct a copies record, the caller must supply the book, branch, and
 	 * number of copies.
@@ -50,6 +54,7 @@ public class BranchCopies {
 		// TODO: check that it's nonnegative?
 		this.copies = copies;
 	}
+
 	/**
 	 * Get the book this record counts the number of copies of.
 	 * @return the book in question
@@ -61,6 +66,7 @@ public class BranchCopies {
 			return id.getBook();
 		}
 	}
+
 	/**
 	 * Get the branch this record counts the number of copies in.
 	 * @return the branch in question
@@ -72,6 +78,7 @@ public class BranchCopies {
 			return id.getBranch();
 		}
 	}
+
 	/**
 	 * Get the number of copies of the book held by the branch.
 	 * @return the number of copies held by the branch
@@ -79,6 +86,7 @@ public class BranchCopies {
 	public int getCopies() {
 		return copies;
 	}
+
 	/**
 	 * Change the number of copies of the book held by the branch.
 	 * @param copies the new number of copies
@@ -87,6 +95,7 @@ public class BranchCopies {
 		// TODO: check that it's nonnegative?
 		this.copies = copies;
 	}
+
 	/**
 	 * We use a combination of the hash codes of the book and branch for this
 	 * object's hash code.
@@ -95,6 +104,7 @@ public class BranchCopies {
 	public int hashCode() {
 		return Objects.hashCode(id);
 	}
+
 	/**
 	 * An object is equal to this one iff it is a BranchCopies with an equal book,
 	 * branch, and number of copies.
@@ -109,5 +119,10 @@ public class BranchCopies {
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getBranch().getName() + " has " + copies + " copies of " + getBook().getTitle() + ".";
 	}
 }

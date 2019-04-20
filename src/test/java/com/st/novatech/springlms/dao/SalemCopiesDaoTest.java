@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 
 /**
  * Tests of the book-copies DAO.
@@ -143,7 +144,6 @@ public class SalemCopiesDaoTest {
 	 * @throws SQLException on database error
 	 */
 	@DisplayName("Updating an entry if it exists")
-	@Disabled("Currently failing despite looking correct by inspection")
 	@Test
 	public void setEntryWithNewNoOfCopies() throws SQLException {
 		final int newNoOfCopies = 100;
@@ -164,12 +164,12 @@ public class SalemCopiesDaoTest {
 	 */
 	@Test
 	public void testGetAllBranchCopies() throws SQLException {
-		final Map<Book, Integer> allBranchCopies = copiesDaoImpl
+		final List<BranchCopies> allBranchCopies = copiesDaoImpl
 				.getAllBranchCopies(testBranch);
-		assertTrue(allBranchCopies.containsKey(testBook),
-				"branch's records includes copies of test book");
-		assertEquals(NUM_COPIES, allBranchCopies.get(testBook).intValue(),
-				"branch's records includes correct copy count for test book");
+		assertTrue(
+				allBranchCopies.contains(
+						new BranchCopies(testBook, testBranch, NUM_COPIES)),
+				"branch's records includes correct copy count for test book at test branch");
 	}
 
 	/**
@@ -178,11 +178,11 @@ public class SalemCopiesDaoTest {
 	 */
 	@Test
 	public void testGetAllBookCopies() throws SQLException {
-		final Map<Branch, Integer> allBookCopies = copiesDaoImpl.getAllBookCopies(testBook);
-		assertTrue(allBookCopies.containsKey(testBranch),
-				"records for a book includes at test branch");
-		assertEquals(NUM_COPIES, allBookCopies.get(testBranch).intValue(),
-				"copy count at test branch is correct");
+		final List<BranchCopies> allBookCopies = copiesDaoImpl.getAllBookCopies(testBook);
+		assertTrue(
+				allBookCopies.contains(
+						new BranchCopies(testBook, testBranch, NUM_COPIES)),
+				"branch's records includes correct copy count for test book at test branch");
 	}
 
 	/**
@@ -191,12 +191,18 @@ public class SalemCopiesDaoTest {
 	 */
 	@Test
 	public void testGetAllCopies() throws SQLException {
-		final Map<Branch, Map<Book, Integer>> allCopies = copiesDaoImpl.getAllCopies();
-		assertTrue(allCopies.containsKey(testBranch),
+		final List<BranchCopies> allCopies = copiesDaoImpl.getAllCopies();
+		assertTrue(
+				allCopies.stream().anyMatch(
+						copies -> Objects.equals(testBranch, copies.getBranch())),
 				"all-copies database includes records for test branch");
-		assertTrue(allCopies.get(testBranch).containsKey(testBook),
+		assertTrue(
+				allCopies.stream().anyMatch(
+						copies -> Objects.equals(testBook, copies.getBook())),
 				"all-copies database includes record for test book");
-		assertEquals(NUM_COPIES, allCopies.get(testBranch).get(testBook).intValue(),
+		assertTrue(
+				allCopies.contains(
+						new BranchCopies(testBook, testBranch, NUM_COPIES)),
 				"all-copies database has right count for test book at test branch");
 	}
 }

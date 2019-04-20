@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * @author Jonathan Lovelace
  */
 @SuppressWarnings("serial")
-@ResponseStatus(HttpStatus.NOT_FOUND)
+@ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "Requested item not found")
 public class RetrieveException extends TransactionException {
 	/**
 	 * To throw an instance of this exception class, the caller must supply the

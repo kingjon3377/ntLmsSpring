@@ -3,12 +3,12 @@ package com.st.novatech.springlms.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import com.st.novatech.springlms.exception.TransactionException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 
 /**
@@ -31,6 +31,8 @@ public interface BorrowerService extends Service {
 	 * @return the object representing the loan, or null if either the the borrower
 	 *         already has that book out from that branch or that branch has no
 	 *         available copies of that book.
+	 * @throws TransactionException if something occurs while attempting to borrow a
+	 *                              book
 	 */
 	Loan borrowBook(Borrower borrower, Book book, Branch branch,
 			LocalDateTime dateOut, LocalDate dueDate) throws TransactionException;
@@ -39,10 +41,10 @@ public interface BorrowerService extends Service {
 	 * Get all book-copy counts for the given branch.
 	 *
 	 * @param branch the branch in question
-	 * @return a mapping from books in that library to the number of copies of each
-	 *         that it has.
+	 * @return a list of copies for the requested branch.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
-	Map<Book, Integer> getAllBranchCopies(Branch branch) throws TransactionException;
+	List<BranchCopies> getAllBranchCopies(Branch branch) throws TransactionException;
 
 	/**
 	 * Handle a returned book: if there is an outstanding loan of the given book to
@@ -53,7 +55,10 @@ public interface BorrowerService extends Service {
 	 * @param book       the book being returned
 	 * @param branch     the branch from which it was borrowed
 	 * @param returnDate the date the borrower returned the book
-	 * @return true on success, false if the book was overdue, and null if it was not present
+	 * @return true on success, false if the book was overdue, and null if it was
+	 *         not present
+	 * @throws TransactionException if something occurs while attempting to return a
+	 *                              book
 	 */
 	Boolean returnBook(Borrower borrower, Book book, Branch branch,
 			LocalDate returnDate) throws TransactionException;
@@ -63,6 +68,7 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param borrower in question
 	 * @return all branches the borrower owes a book return to.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
 	List<Branch> getAllBranchesWithLoan(Borrower borrower) throws TransactionException;
 
@@ -71,6 +77,7 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param borrower in question
 	 * @return the list of book loans the borrower has out from any library.
+	 * @throws TransactionException if something goes wrong with the retrieval
 	 */
 	List<Loan> getAllBorrowedBooks(Borrower borrower) throws TransactionException;
 
@@ -79,27 +86,31 @@ public interface BorrowerService extends Service {
 	 *
 	 * @param cardNo the borrower's card number
 	 * @return the borrower with that card number, or null if none.
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Borrower getBorrower(int cardNo) throws TransactionException;
 
 	/**
 	 * Get a branch in the database.
-	 * 
+	 *
 	 * @return a branch in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
-	Branch getbranch(int branchId) throws TransactionException;
+	Branch getBranch(int branchId) throws TransactionException;
 
 	/**
 	 * Get a book in the database.
-	 * 
+	 *
 	 * @return a book in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Book getBook(int bookId) throws TransactionException;
 
 	/**
 	 * Get a Loan of a specific Borrower and Book and Branch in the database.
-	 * 
+	 *
 	 * @return a Loan in the database
+	 * @throws TransactionException if something goes wrong with the retrieval or it cannot find it
 	 */
 	Loan getLoan(int cardNo, int branchId, int bookId) throws TransactionException;
 }

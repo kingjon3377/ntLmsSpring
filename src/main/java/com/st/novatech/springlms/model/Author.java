@@ -42,6 +42,7 @@ public class Author implements Serializable {
 	protected Author() {
 		this(0, "");
 	}
+
 	/**
 	 * Constructing the author object requires its ID and name.
 	 *

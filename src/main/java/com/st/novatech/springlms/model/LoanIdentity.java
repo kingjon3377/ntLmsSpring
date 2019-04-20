@@ -25,27 +25,37 @@ public class LoanIdentity implements Serializable {
 	 * pushed to production.
 	 */
 	private static final long serialVersionUID = 1L;
+
 	/**
 	 * The book that was borrowed.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "bookId")
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Book book;
+
 	/**
 	 * The borrower who checked out the book.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "cardNo")
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Borrower borrower;
+
 	/**
 	 * The branch from which the book was checked out.
 	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@ManyToOne
 	@JoinColumn(name = "branchId")
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	private final Branch branch;
+
 	/**
 	 * No-arg constructor required for JPA.
 	 */
@@ -65,6 +75,7 @@ public class LoanIdentity implements Serializable {
 		this.borrower = borrower;
 		this.branch = branch;
 	}
+
 	/**
 	 * Get the book that is involved in this loan.
 	 * @return the book that was checked out
@@ -88,6 +99,7 @@ public class LoanIdentity implements Serializable {
 	public Branch getBranch() {
 		return branch;
 	}
+
 	/**
 	 * Test whether an object is equal to this one.
 	 * @param obj an object

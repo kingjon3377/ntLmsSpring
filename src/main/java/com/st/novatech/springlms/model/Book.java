@@ -41,6 +41,14 @@ public class Book implements Serializable {
 	 */
 	@Column
 	private String title;
+	// Uncommenting this field causes book deletions to not be cascaded properly.
+//	/**
+//	 * List of loans of this book.
+//	 */
+//	@JsonBackReference
+//    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+//	@OneToMany(fetch = FetchType.LAZY, mappedBy = "id.book", cascade = {CascadeType.REMOVE})
+//	private List<Loan> loans;
 	/**
 	 * The author of the book.
 	 */
@@ -89,9 +97,18 @@ public class Book implements Serializable {
 		return title;
 	}
 
+//	/**
+//	 * Get a list of loans of this book.
+//	 *
+//	 * <p>TODO: Return a copy instead.
+//	 * @return	list of loans of this book
+//	 */
+//	public List<Loan> getLoans() {
+//		return loans;
+//	}
+
 	/**
 	 * Set the title of the book, which must not be null.
-	 *
 	 * @param title the new title of the book.
 	 */
 	public void setTitle(final String title) {

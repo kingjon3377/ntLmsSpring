@@ -22,6 +22,7 @@ import com.st.novatech.springlms.model.Author;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Publisher;
 
 /**
@@ -130,14 +131,15 @@ public final class BookDaoTest {
 		final Branch branch = branchDao.create("branch name", "");
 		copiesDao.setCopies(branch, toKeep, 3);
 		copiesDao.setCopies(branch, toRemove, 2);
-		assertEquals(5, copiesDao.getAllBranchCopies(branch).values().stream()
-				.reduce(0, Integer::sum),
+		assertEquals(5,
+				copiesDao.getAllBranchCopies(branch).stream()
+						.mapToInt(BranchCopies::getCopies).sum(),
 				"Expected number of copies in the database");
 		testee.delete(toRemove);
 		copiesDao.flush();
-		testee.flush();
-		assertEquals(3, copiesDao.getAllBranchCopies(branch).values().stream()
-				.reduce(0, Integer::sum),
+		assertEquals(3,
+				copiesDao.getAllBranchCopies(branch).stream()
+						.mapToInt(BranchCopies::getCopies).sum(),
 				"Expected number of copies in the database after deleting book");
 	}
 	/**
@@ -151,17 +153,14 @@ public final class BookDaoTest {
 		final Book toRemove = testee.create("book to remove", null, null);
 		final Book toKeep = testee.create("book to keep", null, null);
 		final Branch branch = branchDao.create("branch name", "");
-		branchDao.flush();
 		final Borrower borrower = borrowerDao.create("borrower", "", "");
-		borrowerDao.flush();
 		loansDao.create(toKeep, borrower, branch, null, null);
 		loansDao.create(toRemove, borrower, branch, null, null);
-		loansDao.flush();
 		assertEquals(2, loansDao.findAll().size(),
 				"Two outstanding loans before deletion");
 		testee.delete(toRemove);
-		loansDao.flush();
 		testee.flush();
+		loansDao.flush();
 		assertEquals(1, loansDao.findAll().size(),
 				"Loan of deleted book was also removed");
 	}

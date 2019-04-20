@@ -1,6 +1,5 @@
 package com.st.novatech.springlms.dao;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -31,7 +30,6 @@ public interface BookLoansDao extends JpaRepository<Loan, LoanIdentity> {
 	 * @param dateOut  the date (and time) the book was checked out
 	 * @param dueDate  the date the book is due back
 	 * @return the created loan object
-	 * @throws SQLException on unexpected error dealing with the database
 	 */
 	default Loan create(final Book book, final Borrower borrower, final Branch branch, final LocalDateTime dateOut, final LocalDate dueDate) {
 		return save(new Loan(book, borrower, branch, dateOut, dueDate));
@@ -44,7 +42,6 @@ public interface BookLoansDao extends JpaRepository<Loan, LoanIdentity> {
 	 * @param borrower the borrower in question
 	 * @param branch   the branch in question
 	 * @return the Loan object giving the dates associated with this loan
-	 * @throws SQLException on unexpected error dealing with the database
 	 */
 	default Loan get(final Book book, final Borrower borrower, final Branch branch) {
 		return findById(new LoanIdentity(book, borrower, branch)).orElse(null);

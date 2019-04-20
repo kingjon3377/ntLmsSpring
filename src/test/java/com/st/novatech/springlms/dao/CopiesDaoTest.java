@@ -3,9 +3,9 @@ package com.st.novatech.springlms.dao;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,14 +98,16 @@ class CopiesDaoTest {
 		testee.setCopies(firstBranch, firstBook, 2);
 		testee.setCopies(firstBranch, secondBook, 3);
 		testee.setCopies(secondBranch, firstBook, 5);
-		final Map<Book, Integer> expected = new HashMap<>();
-		expected.put(firstBook, 2);
-		expected.put(secondBook, 3);
-		assertEquals(expected, testee.getAllBranchCopies(firstBranch),
+		assertEquals(
+				new HashSet<>(
+						Arrays.asList(new BranchCopies(firstBook, firstBranch, 2),
+								new BranchCopies(secondBook, firstBranch, 3))),
+				new HashSet<>(testee.getAllBranchCopies(firstBranch)),
 				"Expected book copies returned");
-		expected.clear();
-		expected.put(firstBook, 5);
-		assertEquals(expected, testee.getAllBranchCopies(secondBranch),
+		assertEquals(
+				Collections
+						.singletonList(new BranchCopies(firstBook, secondBranch, 5)),
+				testee.getAllBranchCopies(secondBranch),
 				"Expected book copies returned");
 	}
 
@@ -122,14 +124,16 @@ class CopiesDaoTest {
 		testee.setCopies(firstBranch, firstBook, 2);
 		testee.setCopies(firstBranch, secondBook, 3);
 		testee.setCopies(secondBranch, firstBook, 5);
-		final Map<Branch, Integer> expected = new HashMap<>();
-		expected.put(firstBranch, 2);
-		expected.put(secondBranch, 5);
-		assertEquals(expected, testee.getAllBookCopies(firstBook),
+		assertEquals(
+				new HashSet<>(
+						Arrays.asList(new BranchCopies(firstBook, firstBranch, 2),
+								new BranchCopies(firstBook, secondBranch, 5))),
+				new HashSet<>(testee.getAllBookCopies(firstBook)),
 				"Expected branch copies returned");
-		expected.clear();
-		expected.put(firstBranch, 3);
-		assertEquals(expected, testee.getAllBookCopies(secondBook),
+		assertEquals(
+				Collections
+						.singletonList(new BranchCopies(secondBook, firstBranch, 3)),
+				testee.getAllBookCopies(secondBook),
 				"Expected branch copies returned");
 	}
 
@@ -146,12 +150,11 @@ class CopiesDaoTest {
 		testee.setCopies(firstBranch, firstBook, 2);
 		testee.setCopies(firstBranch, secondBook, 3);
 		testee.setCopies(secondBranch, firstBook, 5);
-		final Map<Branch, Map<Book, Integer>> expected = new HashMap<>();
-		final Map<Book, Integer> first = new HashMap<>();
-		first.put(firstBook, 2);
-		first.put(secondBook, 3);
-		expected.put(firstBranch, first);
-		expected.put(secondBranch, Collections.singletonMap(firstBook, 5));
-		assertEquals(expected, testee.getAllCopies(), "Expected values returned");
+		assertEquals(
+				new HashSet<>(
+						Arrays.asList(new BranchCopies(firstBook, firstBranch, 2),
+								new BranchCopies(secondBook, firstBranch, 3),
+								new BranchCopies(firstBook, secondBranch, 5))),
+				new HashSet<>(testee.getAllCopies()), "Expected values returned");
 	}
 }

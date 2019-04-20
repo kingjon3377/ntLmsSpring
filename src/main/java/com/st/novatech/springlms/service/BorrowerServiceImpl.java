@@ -1,12 +1,9 @@
 package com.st.novatech.springlms.service;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +14,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.st.novatech.springlms.dao.BookDao;
 import com.st.novatech.springlms.dao.BookLoansDao;
@@ -31,6 +29,7 @@ import com.st.novatech.springlms.exception.UnknownSQLException;
 import com.st.novatech.springlms.model.Book;
 import com.st.novatech.springlms.model.Borrower;
 import com.st.novatech.springlms.model.Branch;
+import com.st.novatech.springlms.model.BranchCopies;
 import com.st.novatech.springlms.model.Loan;
 
 /**
@@ -38,8 +37,8 @@ import com.st.novatech.springlms.model.Loan;
  *
  * @author Jonathan Lovelace
  */
-@Service
-public final class BorrowerServiceImpl implements BorrowerService {
+@Service("BorrowerService")
+public class BorrowerServiceImpl implements BorrowerService {
 	/**
 	 * The DAO for the "branches" table.
 	 */
@@ -107,11 +106,8 @@ public final class BorrowerServiceImpl implements BorrowerService {
 
 	/**
 	 * Constructor that uses the default time zone.
-	 *
-	 * @throws IOException  on I/O error reading DB configuration
-	 * @throws SQLException on error setting up the database or DAOs
 	 */
-	public BorrowerServiceImpl() throws IOException, SQLException {
+	public BorrowerServiceImpl() {
 		this(Clock.systemDefaultZone());
 	}
 
@@ -120,11 +116,12 @@ public final class BorrowerServiceImpl implements BorrowerService {
 		try {
 			return branchDao.findAll();
 		} catch (final DataAccessException except) {
-			LOGGER.log(Level.SEVERE,  "SQL error while getting all branches", except);
+			LOGGER.log(Level.SEVERE,  "Error while getting all branches", except);
 			throw rollback(new UnknownSQLException("Getting all branches failed", except));
 		}
 	}
 
+	@Transactional
 	@Override
 	public Loan borrowBook(final Borrower borrower, final Book book,
 			final Branch branch, final LocalDateTime dateOut,
@@ -148,16 +145,17 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Map<Book, Integer> getAllBranchCopies(final Branch branch)
+	public List<BranchCopies> getAllBranchCopies(final Branch branch)
 			throws TransactionException {
 		try {
 			return copiesDao.getAllBranchCopies(branch);
 		} catch (final DataAccessException except) {
-			LOGGER.log(Level.SEVERE, "SQL error while getting branch copies", except);
+			LOGGER.log(Level.SEVERE, "Error while getting branch copies", except);
 			throw rollback(new UnknownSQLException("Getting branch copy records failed", except));
 		}
 	}
 
+	@Transactional
 	@Override
 	public Boolean returnBook(final Borrower borrower, final Book book,
 			final Branch branch, final LocalDate dueDate) throws TransactionException {
@@ -208,7 +206,7 @@ public final class BorrowerServiceImpl implements BorrowerService {
 					.collect(Collectors.toList());
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting loan records", except);
-			throw rollback(new UnknownSQLException("Getting loan records failed", except));
+			throw rollback(new RetrieveException("Getting loan records failed", except));
 		}
 	}
 
@@ -218,9 +216,10 @@ public final class BorrowerServiceImpl implements BorrowerService {
 			return borrowerDao.findById(cardNo).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting borrower details", except);
-			throw rollback(new UnknownSQLException("Getting borrower record failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested borrower", except));
 		}
 	}
+
 	@Override
 	public void commit() throws TransactionException {
 		try {
@@ -249,40 +248,79 @@ public final class BorrowerServiceImpl implements BorrowerService {
 	}
 
 	@Override
-	public Branch getbranch(final int branchId) throws TransactionException {
-		Branch foundbranch = null;
+	public Branch getBranch(final int branchId) throws TransactionException {
 		try {
-			foundbranch = branchDao.findById(branchId).orElse(null);
+			return branchDao.findById(branchId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a branch", except);
-			throw rollback(new RetrieveException("Getting a branch failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested branch", except));
 		}
-		return foundbranch;
 	}
 
 	@Override
 	public Book getBook(final int bookId) throws TransactionException {
-		Book foundbook = null;
 		try {
-			foundbook = bookDao.findById(bookId).get();
+			return bookDao.findById(bookId).orElse(null);
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a book", except);
-			throw rollback(new RetrieveException("Getting a book failed", except));
+			throw rollback(new RetrieveException("Unable to find the requested book", except));
 		}
-		return foundbook;
 	}
 
 	@Override
 	public Loan getLoan(final int cardNo, final int branchId, final int bookId) throws TransactionException {
-		Loan foundLoan = null;
 		try {
-			foundLoan = loanDao.get(bookDao.findById(bookId).get(),
+			return loanDao.get(bookDao.findById(bookId).get(),
 					borrowerDao.findById(cardNo).get(),
 					branchDao.findById(branchId).get());
 		} catch (final DataAccessException except) {
 			LOGGER.log(Level.SEVERE, "SQL error while getting a Loan record", except);
 			throw rollback(new RetrieveException("Getting a Loan failed", except));
 		}
-		return foundLoan;
+	}
+
+	/**
+	 * Set the number of copies of a book held by a particular branch. If the number
+	 * is set to 0, the row is deleted from the database.
+	 *
+	 * @param branch     the branch in question
+	 * @param book       the book in question
+	 * @param noOfCopies the number of copies held by that branch; MUST not be
+	 *                   negative.
+	 * @throws TransationException on unexpected error in dealing with the database. WARNING (NEED to prevent user from passing negative numbers)
+	 */
+	protected void setCopies(final Branch branch, final Book book, final int noOfCopies) throws TransactionException {
+		try {
+			if (noOfCopies < 0) {
+				throw new IllegalArgumentException(
+						"Number of copies must be nonnegative");
+			} else if (book == null || branch == null) {
+				// TODO: throw IllegalArgumentException?
+			} else {
+				copiesDao.save(new BranchCopies(book, branch, noOfCopies));
+			}
+		} catch (final DataAccessException e) {
+			throw new UnknownSQLException("Error with setting copies", e);
+		}
+	}
+
+	/**
+	 * Get the copies entity for a given branch and book.
+	 *
+	 * @param branch	branch in question
+	 * @param book		book in question
+	 * @return			number of copies for a given branch and book
+	 * @throws TransactionException on error in the DAO layer
+	 */
+	protected int getCopies(final Branch branch, final Book book) throws TransactionException {
+		try {
+			if (branch == null || book == null) {
+				return 0; // TODO: Throw IllegalArgumentException instead?
+			} else {
+				return copiesDao.getCopies(branch, book);
+			}
+		} catch (final DataAccessException e) {
+			throw new RetrieveException("Error with getting copies");
+		}
 	}
 }

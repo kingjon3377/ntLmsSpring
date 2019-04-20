@@ -52,6 +52,7 @@ public class Publisher implements Serializable {
 	protected Publisher() {
 		this(0, "");
 	}
+
 	/**
 	 * To construct a publisher object, the caller must at least supply its ID
 	 * number and name.

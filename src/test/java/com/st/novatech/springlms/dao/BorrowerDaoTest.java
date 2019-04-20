@@ -33,6 +33,7 @@ class BorrowerDaoTest {
 	 */
 	@Autowired
 	private BorrowerDao testee;
+
 	/**
 	 * Branch DAO used in tests.
 	 */
@@ -167,7 +168,6 @@ class BorrowerDaoTest {
 				"Two outstanding loans before deletion");
 		testee.delete(toRemove);
 		loansDao.flush();
-		testee.flush();
 		assertEquals(1, loansDao.findAll().size(),
 				"Loan of book to deleted borrower was also removed");
 	}

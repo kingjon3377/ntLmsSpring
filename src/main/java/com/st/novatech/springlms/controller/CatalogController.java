@@ -3,10 +3,12 @@ package com.st.novatech.springlms.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,7 +40,7 @@ public final class CatalogController {
 	 * @return the list of all authors in the database.
 	 * @throws TransactionException on internal error.
 	 */
-	@RequestMapping({"/authors", "/authors/"})
+	@GetMapping({"/authors", "/authors/"})
 	public List<Author> getAuthors() throws TransactionException {
 		return service.getAllAuthors();
 	}
@@ -48,7 +50,8 @@ public final class CatalogController {
 	 * @return the list of all books in the database
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping({"/books", "/books/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@GetMapping({"/books", "/books/"})
 	public List<Book> getBooks() throws TransactionException {
 		return service.getAllBooks();
 	}
@@ -58,7 +61,7 @@ public final class CatalogController {
 	 * @return the list of all publishers in the database
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping({"/publishers","/publishers/"})
+	@GetMapping({"/publishers","/publishers/"})
 	public List<Publisher> getPublishers() throws TransactionException {
 		return service.getAllPublishers();
 	}
@@ -69,7 +72,7 @@ public final class CatalogController {
 	 * @return the author
 	 * @throws TransactionException if author not found, or on internal error
 	 */
-	@RequestMapping({"/author/{authorId}", "/author/{authorId}/"})
+	@GetMapping({"/author/{authorId}", "/author/{authorId}/"})
 	public Author getAuthor(@PathVariable("authorId") final int authorId) throws TransactionException {
 		final Author author = service.getAuthor(authorId);
 		if (author == null) {
@@ -85,7 +88,8 @@ public final class CatalogController {
 	 * @return the book
 	 * @throws TransactionException if book not found, or on internal error
 	 */
-	@RequestMapping({"/book/{bookId}","/book/{bookId}/"})
+	// TODO: Uncomment once controllers are split for service-discovery refactoring
+//	@GetMapping({"/book/{bookId}","/book/{bookId}/"})
 	public Book getBook(@PathVariable("bookId") final int bookId) throws TransactionException {
 		final Book book = service.getBook(bookId);
 		if (book == null) {
@@ -101,7 +105,7 @@ public final class CatalogController {
 	 * @return the publisher
 	 * @throws TransactionException if publisher not found, or on internal error
 	 */
-	@RequestMapping({"/publisher/{publisherId}", "/publisher/{publisherId}/"})
+	@GetMapping({"/publisher/{publisherId}", "/publisher/{publisherId}/"})
 	public Publisher getPublisher(@PathVariable("publisherId") final int publisherId)
 			throws TransactionException {
 		final Publisher publisher = service.getPublisher(publisherId);
@@ -119,8 +123,7 @@ public final class CatalogController {
 	 * @return the updated author
 	 * @throws TransactionException if author not found, or on internal error
 	 */
-	@RequestMapping(path = { "/author/{authorId}",
-			"/author/{authorId}/" }, method = RequestMethod.PUT)
+	@PutMapping({ "/author/{authorId}", "/author/{authorId}/" })
 	public Author updateAuthor(@PathVariable("authorId") final int authorId,
 			@RequestBody final Author input) throws TransactionException {
 		final Author author = service.getAuthor(authorId);
@@ -140,8 +143,7 @@ public final class CatalogController {
 	 * @return the updated publisher
 	 * @throws TransactionException if publisher not found, or on internal error
 	 */
-	@RequestMapping(path = { "/publisher/{publisherId}",
-			"/publisher/{publisherId}/" }, method = RequestMethod.PUT)
+	@PutMapping({ "/publisher/{publisherId}", "/publisher/{publisherId}/" })
 	public Publisher updatePublisher(
 			@PathVariable("publisherId") final int publisherId,
 			@RequestBody final Publisher input) throws TransactionException {
@@ -169,7 +171,7 @@ public final class CatalogController {
 	 * @return the updated book
 	 * @throws TransactionException if the book is not found, or on internal error.
 	 */
-	@RequestMapping(path = {"/book/{bookId}", "/book/{bookId}/"}, method = RequestMethod.PUT)
+	@PutMapping({"/book/{bookId}", "/book/{bookId}/"})
 	public Book updateBook(@PathVariable("bookId") final int bookId,
 			@RequestBody final Book input) throws TransactionException {
 		final Book book = service.getBook(bookId);
@@ -206,7 +208,7 @@ public final class CatalogController {
 	 * @return the created author
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = { "/author", "/author/" }, method = RequestMethod.POST)
+	@PostMapping({ "/author", "/author/" })
 	public Author createAuthor(@RequestParam("name") final String name)
 			throws TransactionException {
 		return service.createAuthor(name);
@@ -218,7 +220,7 @@ public final class CatalogController {
 	 * @param phone the phone number to give the publisher
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = {"/publisher", "/publisher/"}, method = RequestMethod.POST)
+	@PostMapping({"/publisher", "/publisher/"})
 	public Publisher createPublisher(@RequestParam("name") final String name,
 			@RequestParam(name = "address", defaultValue = "") final String address,
 			@RequestParam(name = "phone", defaultValue = "") final String phone)
@@ -233,7 +235,7 @@ public final class CatalogController {
 	 * @param author the author to assign the book to
 	 * @param publisher the publisher to assign the book to
 	 */
-	@RequestMapping(path = {"/book", "/book/"}, method = RequestMethod.POST)
+	@PostMapping({"/book", "/book/"})
 	public Book createBook(@RequestParam("title") final String title,
 			@RequestParam(name = "author", required = false) final Author author,
 			@RequestParam(name = "publisher", required = false) final Publisher publisher)
@@ -269,7 +271,7 @@ public final class CatalogController {
 	 * @param authorId the ID of the author to delete.
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = {"/author/{authorId}", "/author/{authorId}/"}, method = RequestMethod.DELETE)
+	@DeleteMapping({"/author/{authorId}", "/author/{authorId}/"})
 	public void deleteAuthor(@PathVariable("authorId") final int authorId) throws TransactionException {
 		final Author author = service.getAuthor(authorId);
 		if (author != null) {
@@ -282,8 +284,7 @@ public final class CatalogController {
 	 * @param publisherId the ID of the publisher to delete
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = { "/publisher/{publisherId}",
-			"/publisher/{publisherId}/" }, method = RequestMethod.DELETE)
+	@DeleteMapping({ "/publisher/{publisherId}", "/publisher/{publisherId}/" })
 	public void deletePublisher(@PathVariable("publisherId") final int publisherId)
 			throws TransactionException {
 		final Publisher publisher = service.getPublisher(publisherId);
@@ -297,8 +298,7 @@ public final class CatalogController {
 	 * @param bookId the ID of the book to delete
 	 * @throws TransactionException on internal error
 	 */
-	@RequestMapping(path = { "/book/{bookId}",
-			"/book/{bookId}/" }, method = RequestMethod.DELETE)
+	@DeleteMapping({ "/book/{bookId}", "/book/{bookId}/" })
 	public void deleteBook(@PathVariable("bookId") final int bookId)
 			throws TransactionException {
 		final Book book = service.getBook(bookId);

@@ -27,6 +27,7 @@ public class Loan {
 	 */
 	@EmbeddedId
 	private LoanIdentity id;
+
 	/**
 	 * When the book was checked out.
 	 */
@@ -44,6 +45,7 @@ public class Loan {
 	protected Loan() {
 		this(null, null, null, null, null);
 	}
+
 	/**
 	 * To construct a Loan object, the caller must supply the book, borrower, and
 	 * branch that identify the loan in question and the dates the book was checked
