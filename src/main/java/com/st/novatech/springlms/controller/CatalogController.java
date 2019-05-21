@@ -1,8 +1,11 @@
 package com.st.novatech.springlms.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -204,66 +207,85 @@ public final class CatalogController {
 
 	/**
 	 * Create an author with the given name.
-	 * @param name the name to give the author
+	 * @param body the request body, which must contain a 'name' field.
 	 * @return the created author
 	 * @throws TransactionException on internal error
 	 */
 	@PostMapping({ "/author", "/author/" })
-	public Author createAuthor(@RequestParam("name") final String name)
+	public ResponseEntity<Author> createAuthor(
+			@RequestBody final Map<String, String> body)
 			throws TransactionException {
-		return service.createAuthor(name);
+		if (body.containsKey("name")) {
+			return new ResponseEntity(service.createAuthor(body.get("name")), HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST); // TODO: explain what field is missing
+		}
 	}
 	/**
 	 * Create a publisher with the specified parameters.
-	 * @param name the name to give the publisher
-	 * @param address the address to give the publisher
-	 * @param phone the phone number to give the publisher
+	 * @param body the request body, which must contain a 'name' field;
+	 *             'address' and 'phone' fields are also recognized.
 	 * @throws TransactionException on internal error
 	 */
 	@PostMapping({"/publisher", "/publisher/"})
-	public Publisher createPublisher(@RequestParam("name") final String name,
-			@RequestParam(name = "address", defaultValue = "") final String address,
-			@RequestParam(name = "phone", defaultValue = "") final String phone)
+	public ResponseEntity<Publisher> createPublisher(
+			@RequestBody final Map<String, String> body)
 			throws TransactionException {
-		return service.createPublisher(name, address, phone);
+		if (body.containsKey("name")) {
+			return new ResponseEntity(service.createPublisher(body.get("name"),
+						body.getOrDefault("address", ""),
+						body.getOrDefault("phone", "")), HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST); // TODO: explain what field is missing
+		}
 	}
 
 	/**
-	 * Create a book with the specified parameters. If an author or publisher with
-	 * the specified IDs do not exist, they are created, but differences in author or publisher state are otherwise not applied.
-	 * @param title the title to give the book
+	 * Create a book with the specified parameters.
+	 * @param body the request body. It must have a title, its ID is
+	 *             ignored, and its author and publisher state other than
+	 *             ID are ignored unless none with the specified IDs exist,
+	 *             in which case they are added to the database and the
+	 *             provided IDs are ignored.
 	 * @param author the author to assign the book to
 	 * @param publisher the publisher to assign the book to
 	 */
 	@PostMapping({"/book", "/book/"})
-	public Book createBook(@RequestParam("title") final String title,
-			@RequestParam(name = "author", required = false) final Author author,
-			@RequestParam(name = "publisher", required = false) final Publisher publisher)
+	public ResponseEntity<Book> createBook(@RequestBody final Book body)
 			throws TransactionException {
+		final String title = body.getTitle();
+		if (title == null) {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST); // TODO: explain what field is missing
+		}
 		Author actualAuthor;
-		if (author == null) {
+		if (body.getAuthor() == null) {
 			actualAuthor = null;
 		} else {
-			final Author dbAuthor = service.getAuthor(author.getId());
+			final Author dbAuthor = service.getAuthor(body.getAuthor().getId());
 			if (dbAuthor == null) {
-				actualAuthor = service.createAuthor(author.getName());
+				actualAuthor = service.createAuthor(body.getAuthor().getName());
 			} else {
 				actualAuthor = dbAuthor;
 			}
 		}
 		Publisher actualPublisher;
-		if (publisher == null) {
+		if (body.getPublisher() == null) {
 			actualPublisher = null;
 		} else {
-			final Publisher dbPublisher = service.getPublisher(publisher.getId());
+			final Publisher dbPublisher = service.getPublisher(body.getPublisher().getId());
 			if (dbPublisher == null) {
-				actualPublisher = service.createPublisher(publisher.getName(),
-						publisher.getAddress(), publisher.getPhone());
+				actualPublisher = service.createPublisher(
+						body.getPublisher().getName(),
+						body.getPublisher().getAddress(),
+						body.getPublisher().getPhone());
 			} else {
 				actualPublisher = dbPublisher;
 			}
 		}
-		return service.createBook(title, actualAuthor, actualPublisher);
+		return new ResponseEntity(
+				service.createBook(body.getTitle(), actualAuthor,
+					actualPublisher),
+				HttpStatus.CREATED);
 	}
 
 	/**
