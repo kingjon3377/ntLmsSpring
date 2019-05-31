@@ -1,9 +1,15 @@
 package com.st.novatech.springlms.controller;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -133,31 +139,38 @@ public final class ExecutiveController {
 	}
 	/**
 	 * Create a branch with the given name and address.
-	 * @param name the name of the branch
-	 * @param address the address of the branch
+	 * @param body the request body, which must contain a 'name' field; an
+	 *             'address' field is also recognized.
 	 * @return the created branch
 	 * @throws TransactionException on internal error
 	 */
 	@PostMapping({"/branch", "/branch/"})
-	public Branch createBranch(@RequestParam("name") final String name,
-			@RequestParam(name = "address", defaultValue = "") final String address)
+	public ResponseEntity<Branch> createBranch(@RequestBody final Map<String, String> body)
 			throws TransactionException {
-		return service.createBranch(name, address);
+		if (body.containsKey("name")) {
+			return new ResponseEntity(service.createBranch(body.get("name"),
+						body.getOrDefault("address", "")), HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST); // TODO: explain what field is missing
+		}
 	}
 	/**
 	 * Create a borrower record with the given name, address, and phone data.
-	 * @param name the name of the borrower
-	 * @param address the address of the borrower
-	 * @param phone the phone number of the borrower
+	 * @param body the request body, which must contain a 'name' field;
+	 *             'address' and 'phone' fields are also recognized.
 	 * @return the created borrower record
 	 * @throws TransactionException on internal error
 	 */
 	@PostMapping({"/borrower", "/borrower/"})
-	public Borrower createBorrower(@RequestParam("name") final String name,
-			@RequestParam(name = "address", defaultValue = "") final String address,
-			@RequestParam(name = "phone", defaultValue = "") final String phone)
+	public ResponseEntity<Borrower> createBorrower(@RequestBody final Map<String, String> body)
 			throws TransactionException {
-		return service.createBorrower(name, address, phone);
+		if (body.containsKey("name")) {
+			return new ResponseEntity(service.createBorrower(body.get("name"),
+						body.getOrDefault("address", ""),
+						body.getOrDefault("phone", "")), HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity(HttpStatus.BAD_REQUEST); // TODO: explain what field is missing
+		}
 	}
 	/**
 	 * Delete the branch with the given ID.
@@ -197,7 +210,7 @@ public final class ExecutiveController {
 	public Loan overrideDueDate(@PathVariable("bookId") final int bookId,
 			@PathVariable("branchId") final int branchId,
 			@PathVariable("borrowerId") final int borrowerId,
-			@RequestParam final LocalDate dueDate) throws TransactionException {
+			@RequestBody final LocalDate dueDate) throws TransactionException {
 		final Book book = service.getBook(bookId);
 		final Branch branch = service.getBranch(branchId);
 		final Borrower borrower = service.getBorrower(borrowerId);
